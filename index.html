@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Figtree:wght@400;500;700&display=swap">
 <style>
-/* Layout: one illustrated scene per floor, a quest line above it, a dialogue box below it, the journal as an overlay.
+/* Layout: one illustrated scene per floor, a quest line above it, the dialogue box laid over the bottom of the scene, the journal as an overlay.
    Each floor belongs to a different people and carries its own palette (deliberately single-theme per floor). */
 :root{
   --bg:#2a1a12; --ink:#fbeedd; --soft:#d9bfa3; --accent:#e0623b; --panel:#3b261b; --panel2:#4a3123; --line:rgba(251,238,221,.18);
@@ -16,10 +16,13 @@
   --body:"Figtree","Segoe UI",system-ui,sans-serif;
   color-scheme:dark;
 }
-body[data-floor="2"]{--bg:#16302b;--ink:#f6f0da;--soft:#bcd2c4;--accent:#f0b43c;--panel:#1f3f38;--panel2:#285047}
-body[data-floor="3"]{--bg:#1c2a22;--ink:#eef3e6;--soft:#b5c7ae;--accent:#d27aa8;--panel:#26382d;--panel2:#30463a}
-body[data-floor="4"]{--bg:#0f1430;--ink:#ecebff;--soft:#aeb3dd;--accent:#f4c95d;--panel:#1a2148;--panel2:#232c5c}
-body[data-floor="5"]{--bg:#251d3d;--ink:#f3eefc;--soft:#c6bce2;--accent:#ff8a5c;--panel:#30264f;--panel2:#3b2f60}
+body[data-scene="market"]{--bg:#16302b;--ink:#f6f0da;--soft:#bcd2c4;--accent:#f0b43c;--panel:#1f3f38;--panel2:#285047}
+body[data-scene="inn"]{--bg:#2b1f14;--ink:#f8ecd8;--soft:#d8c09c;--accent:#e8a33d;--panel:#3a2a1b;--panel2:#4a3624;--on-accent:#1f140a}
+body[data-scene="library"]{--bg:#1c2a22;--ink:#eef3e6;--soft:#b5c7ae;--accent:#d27aa8;--panel:#26382d;--panel2:#30463a}
+body[data-scene="workshop"]{--bg:#1e2326;--ink:#eef1f2;--soft:#b6c0c4;--accent:#e2733a;--panel:#2a3135;--panel2:#343d42}
+body[data-scene="observatory"]{--bg:#0f1430;--ink:#ecebff;--soft:#aeb3dd;--accent:#f4c95d;--panel:#1a2148;--panel2:#232c5c}
+body[data-scene="garden"]{--bg:#18291c;--ink:#f1f6e9;--soft:#b9cfae;--accent:#9fd36a;--panel:#213a27;--panel2:#2a4831;--on-accent:#122015}
+body[data-scene="summit"]{--bg:#251d3d;--ink:#f3eefc;--soft:#c6bce2;--accent:#ff8a5c;--panel:#30264f;--panel2:#3b2f60}
 
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -61,6 +64,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.mark{animation:none}#avatar{transition:none}body{transition:none}.fade-in{animation:none}}
 
 .dialog{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-height:120px}
+/* in the scene: a translucent box over the lower part of the picture, scrolling inside if a task is long */
+.stage .dialog{position:absolute;left:12px;right:12px;bottom:12px;max-height:min(62%,560px);min-height:0;overflow:auto;gap:10px;padding:12px 14px;
+  background:color-mix(in srgb,var(--panel) 86%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.stage .dialog:empty{display:none}
+.stage .dialog.hidden{display:none}
+.stage .dialog .line{font-size:1.15rem;line-height:1.45}
+.stage .dialog .opt{padding:8px 10px;font-size:1rem}
+.dlg-toggle{position:absolute;top:10px;right:10px;z-index:2;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 80%,transparent);border-radius:999px;padding:5px 12px;font-size:.85rem}
+@media (max-width:600px){.stage .dialog{left:6px;right:6px;bottom:6px;max-height:70%;padding:10px}.stage .dialog .line{font-size:1.05rem}}
 .who{display:flex;align-items:center;gap:10px}
 .who b{font-family:var(--display);font-weight:400;font-size:1.15rem;color:var(--accent)}
 .who .tools{margin-left:auto;display:flex;gap:6px}
@@ -134,8 +146,10 @@ textarea{min-height:120px;resize:vertical}
     <a class="btn" href="2d/" style="text-decoration:none">2D</a>
   </header>
   <section class="quest" id="quest"></section>
-  <div class="stage" id="stage"></div>
-  <section class="dialog" id="dialog" aria-live="polite"></section>
+  <div class="stage" id="stage">
+    <button class="dlg-toggle" id="dlgToggle" aria-controls="dialog" aria-expanded="true">Mətni gizlət</button>
+    <section class="dialog" id="dialog" aria-live="polite"></section>
+  </div>
 </div>
 <div id="layer"></div>
 

@@ -1,11 +1,11 @@
 // Game logic for the 3D tower: state, dialogue, tasks, journal, speech.
 // The 3D world lives in engine.js and floors/floorN.js; this file never touches Three.js directly.
-import { FLOORS } from "./content.js";
+import { FLOORS, SCENES } from "./content.js";
 import { createEngine } from "./engine.js";
 import { loadCharacters } from "./characters.js";
 
 /* ======================= STATE ======================= */
-const KEY="tower-of-words-3d-v1";
+const KEY="tower-of-words-3d-v2"; // v2: longer floors (more tasks, 4 journal pages)
 const fresh=()=>({started:false,floor:0,rate:.9,f:FLOORS.map(()=>({task:0,talked:false,seen:[],guess:{},sealed:[],flags:[],free:""})),ended:false});
 let S=fresh();
 function load(d){if(d&&Array.isArray(d.f)&&d.f.length===FLOORS.length)S=Object.assign(fresh(),d);}
@@ -14,8 +14,9 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 const F=()=>FLOORS[S.floor], FS=()=>S.f[S.floor];
 const flags=()=>{const s=new Set(FS().flags);return s;};
 const tasksDone=fi=>S.f[fi].task>=FLOORS[fi].tasks.length;
-const pagesOf=fi=>[FLOORS[fi].words.slice(0,4),FLOORS[fi].words.slice(4,8)];
-const journalDone=fi=>S.f[fi].sealed.length===2;
+// the journal has one page per four words
+const pagesOf=fi=>{const w=FLOORS[fi].words,p=[];for(let i=0;i<w.length;i+=4)p.push(w.slice(i,i+4));return p;};
+const journalDone=fi=>S.f[fi].sealed.length===pagesOf(fi).length;
 const exitOpen=fi=>tasksDone(fi)&&journalDone(fi);
 const knownWord=(fi,w)=>pagesOf(fi).some((p,i)=>S.f[fi].sealed.includes(i)&&p.some(x=>x.w===w));
 
@@ -89,7 +90,7 @@ const engine=createEngine(stage,{onSpot:id=>clickSpot(id)});engineRef=engine;
 const floorMods={};
 async function floorModule(i){
   if(floorMods[i])return floorMods[i];
-  try{floorMods[i]=(await import(`./floors/floor${i+1}.js`)).default;}
+  try{floorMods[i]=(await import(`./floors/${SCENES[i]}.js`)).default;}
   catch(e){console.warn("floor",i+1,"not built yet, using placeholder",e);floorMods[i]=placeholderFloor(i);}
   return floorMods[i];
 }
@@ -115,13 +116,13 @@ function renderQuest(){
   const fl=F(),fs=FS(),t=fl.tasks[fs.task];
   let text;
   if(t) text=fs.talked&&t.doHint?t.doHint:t.hint;
-  else if(!journalDone(S.floor)) text=`Dəftəri aç: ${2-fs.sealed.length} səhifəni deşifrə et. Sözləri personajların danışığından topladın.`;
+  else if(!journalDone(S.floor)) text=`Dəftəri aç: ${pagesOf(S.floor).length-fs.sealed.length} səhifəni deşifrə et. Sözləri personajların danışığından topladın.`;
   else text=S.floor===FLOORS.length-1?"Zəngi çal.":"Yol açıqdır. Yuxarı qalx.";
   quest.innerHTML=`<span class="label">${esc(fl.people)} · ${fl.cefr}</span><span class="place">${esc(fl.name)}</span><span class="text">${esc(text)}</span>`;
   const fb=document.getElementById("floors");fb.innerHTML="";
   FLOORS.forEach((_,i)=>fb.appendChild($(`<span class="${i===S.floor?"on":exitOpen(i)?"done":""}" style="height:${10+i*5}px" title="${esc(FLOORS[i].name)}"></span>`)));
 }
-function updateCount(){const fs=FS();document.getElementById("jcount").textContent=fs.seen.length+"/8";}
+function updateCount(){const fs=FS();document.getElementById("jcount").textContent=fs.seen.length+"/"+F().words.length;}
 
 /* ======================= DIALOGUE ======================= */
 function speakerHead(name,lines,who){
@@ -164,13 +165,68 @@ function clickSpot(id){
 }
 
 function runTask(t,sp){
-  showLines(sp.npc,t.say,d=>{
+  const lines=t.type==="talk"?[...(t.say||[]),...(t.turns[0].q||[])]:t.say;
+  showLines(sp.npc,lines,d=>{
     if(t.type==="fetch") d.appendChild($(`<p class="hint">${esc(t.doHint)}</p>`));
     if(t.type==="line"){const b=$(`<button class="btn primary">Anladım</button>`);b.onclick=()=>completeTask(t);d.appendChild($(`<div class="row"></div>`)).appendChild(b);}
     if(t.type==="choice") choiceUI(t,d);
     if(t.type==="build") buildUI(t,d);
     if(t.type==="free") freeUI(t,d);
+    if(t.type==="talk") talkUI(t,sp,d,0);
+    if(t.type==="listen") listenUI(t,d);
   });
+}
+
+// A conversation of several turns: the character says something, you pick what to answer.
+// turn: {q:[lines], opts:[...], a:index, wrong:"their reply to a wrong answer", speak:true to say it aloud}
+// t.say opens the talk; each turn's q follows on screen. After the last turn the task is done.
+function talkUI(t,sp,d,k){
+  const turn=t.turns[k];
+  if(k>0){(turn.q||[]).forEach(l=>d.appendChild(lineEl(l)));speak((turn.q||[]).join(" "),0,sp.id);} // turn 0 is shown by runTask
+  d.appendChild($(`<p class="hint">Cavabını seç (${k+1}/${t.turns.length}).</p>`));
+  const box=$(`<div class="opts"></div>`),msg=$(`<div class="msg"></div>`);
+  const next=()=>{
+    if(k+1>=t.turns.length)return completeTask(t);
+    dialog.innerHTML="";dialog.appendChild(speakerHead(sp.npc,t.turns[k+1].q||[],sp.id));
+    if(turn.then){dialog.appendChild(lineEl(turn.then));}
+    if(turn.then)speak(turn.then,0,sp.id);
+    setTimeout(()=>talkUI(t,sp,dialog,k+1),turn.then?Math.max(900,turn.then.split(/\s+/).length*420/S.rate):0);
+  };
+  turn.opts.map((o,i)=>[o,i]).sort(()=>Math.random()-.5).forEach(([o,i])=>{
+    const b=$(`<button class="opt">${esc(o)}</button>`);
+    b.onclick=()=>{
+      speak(o);
+      if(i!==turn.a){b.classList.add("wrong");msg.className="msg bad";msg.innerHTML="";
+        if(turn.wrong){msg.appendChild(lineEl(turn.wrong));setTimeout(()=>speak(turn.wrong,0,sp.id),900);}
+        msg.appendChild($(`<span class="hint">Bu cavab uyğun gəlmir. Yenə seç.</span>`));return;}
+      box.remove();msg.remove();
+      if(turn.speak){speakUI(o,d,next);return;}
+      setTimeout(next,900);
+    };
+    box.appendChild(b);
+  });
+  d.append(box,msg);
+}
+
+// Listening: a longer speech, then questions about what you heard.
+// t.qs: [{q:"question (English)", az:"optional hint in Azerbaijani", opts:[...], a:index}]
+function listenUI(t,d){
+  let k=0;
+  const area=$(`<div class="stack" style="display:flex;flex-direction:column;gap:8px"></div>`);d.appendChild(area);
+  const ask=()=>{
+    if(k>=t.qs.length)return completeTask(t);
+    const q=t.qs[k];area.innerHTML="";
+    area.appendChild($(`<p class="hint">Sual ${k+1}/${t.qs.length}${q.az?` · ${esc(q.az)}`:""}</p>`));
+    area.appendChild(lineEl(q.q));
+    const box=$(`<div class="opts"></div>`),msg=$(`<p class="msg"></p>`);
+    q.opts.map((o,i)=>[o,i]).sort(()=>Math.random()-.5).forEach(([o,i])=>{
+      const b=$(`<button class="opt">${esc(o)}</button>`);
+      b.onclick=()=>{if(i===q.a){k++;setTimeout(ask,500);}else{b.classList.add("wrong");msg.className="msg bad";msg.textContent="Yox. ▶ ilə yenidən dinlə.";}};
+      box.appendChild(b);
+    });
+    area.append(box,msg);
+  };
+  ask();
 }
 function completeTask(t){
   const fs=FS(),fl=F();
@@ -308,7 +364,7 @@ function drawJournal(){
     pages.appendChild(el);
   });
   sh.appendChild(pages);
-  if(fs.sealed.length<2){
+  if(fs.sealed.length<pagesOf(fi).length){
     const used=new Set(Object.values(fs.guess));
     const pal=$(`<div class="page"><p class="hint">${picking?`<b>${esc(picking)}</b> üçün şəkil seç:`:"Şəkillər. Əvvəlcə bir sözün xanasına toxun."}</p><div class="palette"></div></div>`);
     [...words].sort((a,b)=>a.p<b.p?-1:1).forEach(x=>{
@@ -335,9 +391,9 @@ function story(){
 function climb(){S.floor++;save();renderAll();story();}
 function ending(){
   S.ended=true;save();speak("Thank you, traveler. Now every people of the tower will learn.");
-  const learned=S.f.reduce((n,f)=>n+f.sealed.length*4,0);
+  const learned=S.f.reduce((n,f,i)=>n+pagesOf(i).filter((_,k)=>f.sealed.includes(k)).flat().length,0);
   layer.innerHTML="";
-  const ov=$(`<div class="overlay"><div class="sheet center"><h2>Qüllə danışır</h2><p>Zəng çaldı və bütün xalqlar bir-birini eşitdi. Sən ${learned} söz deşifrə etdin, 5 xalqla danışdın və Şuraya öz hekayəni danışdın. A2-dən B1-ə yol belə keçir: hər gün bir az dinlə, bir az danış.</p><div class="row" style="justify-content:center"><button class="btn" id="again">Yenidən başla</button><button class="btn primary" id="stay">Qüllədə qal</button></div></div></div>`);
+  const ov=$(`<div class="overlay"><div class="sheet center"><h2>Qüllə danışır</h2><p>Zəng çaldı və bütün xalqlar bir-birini eşitdi. Sən ${learned} söz deşifrə etdin, ${FLOORS.length} xalqla danışdın və Şuraya öz hekayəni danışdın. A2-dən B1-ə yol belə keçir: hər gün bir az dinlə, bir az danış.</p><div class="row" style="justify-content:center"><button class="btn" id="again">Yenidən başla</button><button class="btn primary" id="stay">Qüllədə qal</button></div></div></div>`);
   ov.querySelector("#again").onclick=()=>{S=fresh();save();renderAll();story();};
   ov.querySelector("#stay").onclick=closeLayer;
   layer.appendChild(ov);
@@ -356,8 +412,13 @@ function menu(){
   let armed=false;ov.querySelector("#mreset").onclick=e=>{if(!armed){armed=true;e.target.textContent="Əminsən? Yenidən bas";return;}S=fresh();save();renderAll();story();};
   layer.appendChild(ov);
 }
-function renderAll(){document.body.dataset.floor=S.floor+1;renderScene();renderQuest();updateCount();say("Yerə toxunaraq gəz, personajlara və əşyalara toxunaraq danış. Parlayan almaz kiminlə danışmalı olduğunu göstərir. Klaviaturada W A S D da işləyir.");}
+function renderAll(){document.body.dataset.floor=S.floor+1;document.body.dataset.scene=SCENES[S.floor];renderScene();renderQuest();updateCount();say("Yerə toxunaraq gəz, personajlara və əşyalara toxunaraq danış. Parlayan almaz kiminlə danışmalı olduğunu göstərir. Klaviaturada W A S D da işləyir.");}
 document.getElementById("journalBtn").onclick=openJournal;
+// the dialogue sits over the scene; it can be hidden to look around, and comes back when someone speaks
+const dlgToggle=document.getElementById("dlgToggle");
+const setDialogHidden=h=>{dialog.classList.toggle("hidden",h);dlgToggle.textContent=h?"Mətni göstər":"Mətni gizlət";dlgToggle.setAttribute("aria-expanded",String(!h));};
+dlgToggle.onclick=()=>setDialogHidden(!dialog.classList.contains("hidden"));
+new MutationObserver(()=>setDialogHidden(false)).observe(dialog,{childList:true});
 document.getElementById("menuBtn").onclick=menu;
 
 window.claude?.hot?.snapshot?.(()=>S);

@@ -1,4 +1,4 @@
-// Floor 1: The Gate. A desert courtyard before the tower's great door.
+// The Gate. A desert courtyard before the tower's great door.
 // Spot ids (must match content.js): well, bread, pilgrim, key, keeper, door
 export default {
   sky: { top: "#f6c27a", bottom: "#e88a55" },

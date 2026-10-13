@@ -1,4 +1,4 @@
-// Floor 5: The Summit. The open top of the tower, above the clouds, where the elders of all peoples meet.
+// The Summit. The open top of the tower, above the clouds, where the elders of all peoples meet.
 // Spot ids (must match content.js): elder1, elder2, elder3, table, bell
 export default {
   sky: { top: "#bfa9e8", bottom: "#f3b3a0" },

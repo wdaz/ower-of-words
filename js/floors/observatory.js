@@ -1,4 +1,4 @@
-// Floor 4: The Observatory. An open-air terrace at the top of the tower, under the night sky.
+// The Observatory. An open-air terrace at the top of the tower, under the night sky.
 // Spot ids (must match content.js): map, apprentice, telescope, astronomer, small, bright, red, ladder
 const reduceMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 

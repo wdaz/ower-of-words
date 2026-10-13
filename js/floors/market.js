@@ -1,4 +1,4 @@
-// Floor 2: The Market. A teal-walled bazaar with three striped stalls and stairs going up on the right.
+// The Market. A teal-walled bazaar with three striped stalls and stairs going up on the right.
 // Spot ids (must match content.js): child, fseller, fruit, fishman, fish, jeweler, ring, stairs
 export default {
   sky: { top: "#8fd0c2", bottom: "#cfe9d8" },

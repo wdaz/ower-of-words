@@ -1,4 +1,4 @@
-// Floor 3: The Library. A hushed green hall of scribes: tall shelves, a great arched window,
+// The Library. A hushed green hall of scribes: tall shelves, a great arched window,
 // the librarian at her desk, a reader at his table, and a spiral stair climbing to the stars.
 // Spot ids (must match content.js): red, green, blue, sign, librarian, reader, glasses, spiral
 export default {
