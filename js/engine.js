@@ -12,7 +12,7 @@ export function createEngine(container, { onSpot }) {
   container.appendChild(renderer.domElement);
 
   const camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 200);
-  let scene, floor, api, spots, markers, bounds, camOffset, ringMesh;
+  let scene, floor, api, spots, markers, bounds, camOffset, ringMesh, figures = [], talkingSpot = null, focusSpot = null;
   const clock = new THREE.Clock();
   const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -65,6 +65,10 @@ export function createEngine(container, { onSpot }) {
       spawn: [0, 3],
     };
     mod.build(kit, api, state);
+    // every character in the scene gets breathing, looking and gestures
+    figures = [];
+    scene.traverse(o => { if (o.userData.figure && o !== avatar) figures.push(o); });
+    talkingSpot = null;
     scene.add(avatar);
     avatar.position.set(api.spawn[0], 0, api.spawn[1]);
     avatar.rotation.y = 0;
@@ -74,7 +78,7 @@ export function createEngine(container, { onSpot }) {
     ringMesh.rotation.x = -Math.PI / 2; ringMesh.position.y = 0.02; ringMesh.visible = false; scene.add(ringMesh);
 
     if (mod.update) mod.update(api, state);
-    camera.position.copy(avatar.position).add(camOffset);
+    camera.position.copy(avatar.position).add(camOffset); lookCur.set(avatar.position.x, 1.8, avatar.position.z - 4); focusSpot = null;
     resize();
   }
 
@@ -93,11 +97,17 @@ export function createEngine(container, { onSpot }) {
 
   function walkTo(x, z, cb) {
     target = new THREE.Vector3(THREE.MathUtils.clamp(x, bounds.minX, bounds.maxX), 0, THREE.MathUtils.clamp(z, bounds.minZ, bounds.maxZ));
-    arriveCb = cb || null;
+    arriveCb = cb || null; focusSpot = null;
   }
   function goToSpot(id) {
     const s = spots.get(id); if (!s) return;
-    walkTo(s.walkTo[0], s.walkTo[1], () => { faceTowards(s.obj); onSpot(id); });
+    walkTo(s.walkTo[0], s.walkTo[1], () => {
+      faceTowards(s.obj);
+      // conversation camera: move in close when the spot is a character
+      let isFigure = false; s.obj.traverse(o => { if (o.userData.figure) isFigure = true; });
+      focusSpot = isFigure ? id : null;
+      onSpot(id);
+    });
   }
   function faceTowards(obj) { const wp = new THREE.Vector3(); obj.getWorldPosition(wp); avatar.rotation.y = Math.atan2(wp.x - avatar.position.x, wp.z - avatar.position.z); }
 
@@ -135,13 +145,14 @@ export function createEngine(container, { onSpot }) {
   }
   window.addEventListener("resize", resize);
 
+  const focusPos = new THREE.Vector3(), focusLook = new THREE.Vector3(), lookCur = new THREE.Vector3(0, 1.8, 0), closeOffset = new THREE.Vector3(2.4, 2.1, 4.2), focusHead = new THREE.Vector3();
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   function tick() {
     const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
     if (scene) {
       // keyboard walking
       const kv = new THREE.Vector3((keys.has("d") || keys.has("arrowright")) - (keys.has("a") || keys.has("arrowleft")), 0, (keys.has("s") || keys.has("arrowdown")) - (keys.has("w") || keys.has("arrowup")));
-      if (kv.lengthSq()) { target = null; arriveCb = null; kv.normalize().multiplyScalar(4 * dt); avatar.position.add(kv); avatar.rotation.y = Math.atan2(kv.x, kv.z); }
+      if (kv.lengthSq()) { focusSpot = null; target = null; arriveCb = null; kv.normalize().multiplyScalar(4 * dt); avatar.position.add(kv); avatar.rotation.y = Math.atan2(kv.x, kv.z); }
       if (target) {
         const d = target.clone().sub(avatar.position); d.y = 0;
         const dist = d.length();
@@ -151,17 +162,30 @@ export function createEngine(container, { onSpot }) {
       avatar.position.x = THREE.MathUtils.clamp(avatar.position.x, bounds.minX, bounds.maxX);
       avatar.position.z = THREE.MathUtils.clamp(avatar.position.z, bounds.minZ, bounds.maxZ);
       const walking = target || kv.lengthSq();
-      avatar.position.y = walking && !reduceMotion ? Math.abs(Math.sin(t * 10)) * 0.06 : 0;
+      avatar.position.y = walking && !reduceMotion ? Math.abs(Math.sin(t * 10)) * 0.04 : 0;
+      kit.animateFigure(avatar, t, dt, { walking, keepYaw: true, still: reduceMotion, lookAt: focusSpot ? focusHead : null });
+      const avHead = avatar.position.clone(); avHead.y += 1.6;
+      for (const fg of figures) {
+        const id = fg.userData.spotId, talking = id && id === talkingSpot;
+        const d = Math.hypot(fg.position.x - avatar.position.x, fg.position.z - avatar.position.z);
+        kit.animateFigure(fg, t, dt, { talking, still: reduceMotion, lookAt: talking || d < 4.5 ? avHead : null, turnTo: talking || d < 2.2 ? avatar.position : null });
+      }
       for (const m of markers.values()) { m.rotation.y += dt * 2; if (!reduceMotion) m.position.y = m.userData.baseY + Math.sin(t * 3) * 0.12; }
       if (floor.tick) floor.tick(api, t, dt);
-      const want = avatar.position.clone().add(camOffset);
-      camera.position.lerp(want, reduceMotion ? 1 : Math.min(1, dt * 3));
-      camera.lookAt(avatar.position.x, 1.8, avatar.position.z - 4);
+      // follow the traveler; during a conversation, frame both faces up close
+      const fs = focusSpot && spots.get(focusSpot);
+      if (fs) { fs.obj.getWorldPosition(focusPos); focusHead.set(focusPos.x, fs.height - 0.3, focusPos.z); focusPos.lerp(avatar.position, 0.4); focusLook.set(focusPos.x, fs.height * 0.75, focusPos.z - 0.6); }
+      else { focusPos.copy(avatar.position); focusLook.set(avatar.position.x, 1.8, avatar.position.z - 4); }
+      const want = focusPos.clone().add(fs ? closeOffset : camOffset);
+      const a = reduceMotion ? 1 : Math.min(1, dt * 2.5);
+      camera.position.lerp(want, a); lookCur.lerp(focusLook, a);
+      camera.lookAt(lookCur);
       renderer.render(scene, camera);
     }
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
 
-  return { loadFloor, refresh, setMarkers, goToSpot, walkTo, resize, get api() { return api; }, renderer, camera };
+  function setTalking(id) { talkingSpot = id; }
+  return { setTalking, loadFloor, refresh, setMarkers, goToSpot, walkTo, resize, get api() { return api; }, renderer, camera };
 }

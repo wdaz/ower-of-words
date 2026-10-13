@@ -22,7 +22,18 @@ const knownWord=(fi,w)=>pagesOf(fi).some((p,i)=>S.f[fi].sealed.includes(i)&&p.so
 let voice=null;
 function pickVoice(){const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];voice=vs.find(v=>/en[-_](US|GB)/i.test(v.lang)&&/Google|Natural|Samantha|Daniel|Aria|Jenny/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||null;}
 if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
-function speak(text,rate){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";if(voice)u.voice=voice;u.rate=rate||S.rate;speechSynthesis.speak(u);}
+// who is speaking right now, so their character can move its mouth and gesture
+let talkTimer=null;
+function talking(id,ms){engineRef&&engineRef.setTalking(id);clearTimeout(talkTimer);if(id&&ms)talkTimer=setTimeout(()=>engineRef&&engineRef.setTalking(null),ms);}
+let engineRef=null;
+function speak(text,rate,who){
+  const est=Math.max(900,text.split(/\s+/).length*420/(rate||S.rate));
+  talking(who||null,who?est:0);
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";if(voice)u.voice=voice;u.rate=rate||S.rate;
+  if(who){u.onstart=()=>talking(who,est*1.5);u.onend=()=>talking(null);}
+  speechSynthesis.speak(u);
+}
 
 /* ======================= VOICE IN ======================= */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -72,7 +83,7 @@ function lineEl(text){
 }
 
 /* ======================= SCENE ======================= */
-const engine=createEngine(stage,{onSpot:id=>clickSpot(id)});
+const engine=createEngine(stage,{onSpot:id=>clickSpot(id)});engineRef=engine;
 const floorMods={};
 async function floorModule(i){
   if(floorMods[i])return floorMods[i];
@@ -111,16 +122,17 @@ function renderQuest(){
 function updateCount(){const fs=FS();document.getElementById("jcount").textContent=fs.seen.length+"/8";}
 
 /* ======================= DIALOGUE ======================= */
-function speakerHead(name,lines){
+function speakerHead(name,lines,who){
   const h=$(`<div class="who"><b>${esc(name)}</b><span class="tools"><button class="icon" aria-label="Dinlə">▶</button><button class="icon" aria-label="Yavaş dinlə">🐢</button></span></div>`);
   const all=lines.join(" ");
-  const [p1,p2]=h.querySelectorAll("button");p1.onclick=()=>speak(all);p2.onclick=()=>speak(all,.65);
+  const [p1,p2]=h.querySelectorAll("button");p1.onclick=()=>speak(all,0,who);p2.onclick=()=>speak(all,.65,who);
   return h;
 }
-function showLines(name,lines,after){
-  dialog.innerHTML="";dialog.appendChild(speakerHead(name,lines));
+function showLines(name,lines,after,who){
+  who=who||(F().spots.find(s=>s.npc&&s.npc===name)||{}).id;
+  dialog.innerHTML="";dialog.appendChild(speakerHead(name,lines,who));
   lines.forEach(l=>dialog.appendChild(lineEl(l)));
-  speak(lines.join(" "));
+  speak(lines.join(" "),0,who);
   if(after)after(dialog);
 }
 function say(text){dialog.innerHTML="";dialog.appendChild($(`<p class="hint">${esc(text)}</p>`));}
