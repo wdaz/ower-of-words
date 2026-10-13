@@ -1,6 +1,8 @@
 // The Library. A hushed green hall of scribes: tall shelves, a great arched window,
 // the librarian at her desk, a reader at his table, and a spiral stair climbing to the stars.
-// Spot ids (must match content.js): red, green, blue, sign, librarian, reader, glasses, spiral
+// plus the clerk by the returns cart, the old scribe at his writing table, a ladder against the shelves, a candle stand.
+// Spot ids (must match js/content/library.js): red, green, blue, sign, cart, candle, ladder,
+// librarian, reader, clerk, scribe, glasses, spiral
 export default {
   sky: { top: "#16241b", bottom: "#2b4234" },
   fog: { color: "#22362a", near: 24, far: 52 },
@@ -11,7 +13,7 @@ export default {
 
   build(k, api) {
     const { THREE } = api;
-    api.spawn = [-2, 3];
+    api.spawn = [-0.5, 1.6];
     const WALL = "#33503f", WALL2 = "#4d7058", DARK = "#25392d", WOOD = "#4a3226", WOOD_D = "#2e1e15", WOOD_L = "#6e4a34", PINK = "#d27aa8";
 
     // ---- the room: back wall, wainscot, pilasters, cornice, side walls ----
@@ -160,6 +162,73 @@ export default {
     api.spot("glasses", chair, { walkTo: [6.6, -0.9], height: 1.4 });
     api.specs = specs;
 
+    // ---- the old scribe at his low writing table (left) ----
+    const wtable = k.group();
+    const wtop = k.box(1.9, 0.1, 0.95, WOOD_L); k.at(wtop, 0, 0.72, 0); wtable.add(wtop);
+    [[-0.85, -0.38], [0.85, -0.38], [-0.85, 0.38], [0.85, 0.38]].forEach(([x, z]) => { const l = k.box(0.1, 0.74, 0.1, WOOD_L); k.at(l, x, 0, z); wtable.add(l); });
+    const parch = k.box(0.7, 0.02, 0.5, "#efe2c4"); k.at(parch, 0.1, 0.77, 0.1); parch.rotation.y = -0.15; wtable.add(parch);
+    const pile = k.box(0.5, 0.3, 0.38, "#7d5a8c"); k.at(pile, -0.6, 0.77, -0.1); pile.rotation.y = 0.25; wtable.add(pile);
+    const wink = k.cylinder(0.07, 0.09, 0.12, "#1a1410", 6); k.at(wink, 0.55, 0.77, 0.2); wtable.add(wink);
+    const wquill = k.box(0.03, 0.4, 0.03, "#f2e6d0"); k.at(wquill, 0.58, 0.82, 0.2); wquill.rotation.z = 0.4; wtable.add(wquill);
+    const stub = k.cylinder(0.06, 0.07, 0.12, "#efe2c4", 6); k.at(stub, 0.75, 0.77, -0.2); wtable.add(stub); // his burnt-out candle
+    const sflame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 6), new THREE.MeshBasicMaterial({ color: "#ffcf6a" }));
+    sflame.position.set(0.75, 1.36, -0.2); wtable.add(sflame);
+    const fresh = k.cylinder(0.06, 0.06, 0.45, "#f6efd8", 6); k.at(fresh, 0.75, 0.89, -0.2); wtable.add(fresh);
+    const slight = new THREE.PointLight("#ffcf8a", 6, 6, 1.6); slight.position.set(0.75, 1.7, 0); wtable.add(slight);
+    k.at(wtable, -7.4, 0, -1.6); api.add(wtable);
+    const sstool = k.cylinder(0.32, 0.36, 0.45, WOOD, 8); k.at(sstool, -7.4, 0, -2.45); api.add(sstool);
+    const scribe = k.figure({ model: "Mage", sit: true, robe: "#6f7a8a", trim: "#c9a24a", prop: "scroll", scale: 1.0 });
+    scribe.position.set(-7.4, 0.45, -2.45);
+    api.spot("scribe", scribe, { walkTo: [-6.2, -0.4] });
+    api.lit = [sflame, fresh, slight];
+
+    // ---- a tall ladder leaning on the shelves, the lost book and a sleeping mouse on top ----
+    const ladder = k.group();
+    [-0.36, 0.36].forEach(x => { const r = k.box(0.09, 4.4, 0.09, WOOD_L); k.at(r, x, 0, 0); ladder.add(r); });
+    for (let i = 0; i < 9; i++) { const r = k.box(0.72, 0.06, 0.07, WOOD); k.at(r, 0, 0.4 + i * 0.46, 0); if (i === 2) r.rotation.z = 0.12; ladder.add(r); }
+    const top = k.box(0.86, 0.08, 0.36, WOOD); k.at(top, 0, 4.36, -0.05); ladder.add(top);
+    const lbook = k.group(k.box(0.62, 0.16, 0.44, "#c0392b")); const lband = k.box(0.64, 0.02, 0.1, "#f2d48a"); k.at(lband, 0, 0.16, 0); lbook.add(lband);
+    k.at(lbook, 0, 4.44, -0.02); lbook.rotation.y = 0.2; ladder.add(lbook);
+    const mouse = k.emoji("🐭", 0.38); mouse.position.set(0.05, 4.86, 0.06); ladder.add(mouse);
+    const lhit = new THREE.Mesh(new THREE.BoxGeometry(1.0, 4.6, 0.6), hitMat); lhit.position.y = 2.3; ladder.add(lhit);
+    ladder.rotation.x = -0.17;
+    k.at(ladder, -5.5, 0, -3.75);
+    api.spot("ladder", ladder, { walkTo: [-5.5, -2.4], height: 5.2 });
+    api.ladderBook = lbook;
+
+    // ---- the returns cart and the clerk in his green coat ----
+    const cart = k.group();
+    const tray = k.box(1.3, 0.12, 0.7, WOOD_L); k.at(tray, 0, 0.62, 0); cart.add(tray);
+    const tray2 = k.box(1.3, 0.08, 0.7, WOOD_L); k.at(tray2, 0, 0.22, 0); cart.add(tray2);
+    [[-0.6, -0.3], [0.6, -0.3], [-0.6, 0.3], [0.6, 0.3]].forEach(([x, z]) => { const l = k.box(0.06, 0.62, 0.06, WOOD_D); k.at(l, x, 0.08, z); cart.add(l); });
+    [[-0.6, -0.3], [0.6, -0.3], [-0.6, 0.3], [0.6, 0.3]].forEach(([x, z]) => { const w = k.cylinder(0.08, 0.08, 0.04, "#1a1410", 8); w.rotation.x = Math.PI / 2; k.at(w, x, 0.06, z); cart.add(w); });
+    const handle = k.box(0.06, 0.5, 0.06, WOOD_D); k.at(handle, 0.66, 0.68, 0); cart.add(handle);
+    const cblue = k.box(0.5, 0.14, 0.36, "#2f6fc2"); k.at(cblue, -0.25, 0.68, 0); cblue.rotation.y = 0.2; cart.add(cblue);
+    [["#c9a24a", 0.12], ["#5d7d6a", 0.1]].forEach(([c, h], i) => { const b = k.box(0.46, h, 0.34, c); k.at(b, 0.1 + i * 0.05, 0.26, -0.05); cart.add(b); });
+    const note = k.box(0.26, 0.015, 0.18, "#fbf5e2"); k.at(note, 0.32, 0.69, 0.08); note.rotation.y = -0.3; cart.add(note);
+    const ctag = k.sign("RETURNS", { bg: "#efe5cc", ink: "#1c2a22", height: 0.24 }); ctag.position.set(0, 0.42, 0.37); cart.add(ctag);
+    const chit = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 0.9), hitMat); chit.position.y = 0.5; cart.add(chit);
+    k.at(cart, -3.5, 0, -2.1);
+    api.spot("cart", cart, { walkTo: [-3.5, -0.8], height: 1.4 });
+    api.note = note;
+    const clerk = k.figure({ model: "Rogue", robe: "#3e7a4a", trim: "#c9a24a", prop: "book" });
+    clerk.position.set(-2.0, 0, -3.0);
+    api.spot("clerk", clerk, { walkTo: [-1.1, -1.7] });
+
+    // ---- a stand of fresh candles beside the librarian's desk ----
+    const stand = k.group();
+    const sfoot = k.cylinder(0.3, 0.38, 0.1, "#8a6a3a", 8); stand.add(sfoot);
+    const spole = k.cylinder(0.05, 0.05, 1.0, "#8a6a3a", 6); k.at(spole, 0, 0.1, 0); stand.add(spole);
+    const sdish = k.cylinder(0.34, 0.26, 0.08, "#8a6a3a", 10); k.at(sdish, 0, 1.08, 0); stand.add(sdish);
+    api.freshCandles = [];
+    [[-0.15, -0.08], [0.15, -0.08], [0, 0.14], [-0.02, -0.02]].forEach(([x, z], i) => {
+      const c = k.cylinder(0.05, 0.05, 0.4 + (i % 2) * 0.08, "#f6efd8", 6); k.at(c, x, 1.16, z); stand.add(c);
+      if (i === 3) api.freshCandles.push(c);
+    });
+    const shit = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.7, 0.8), hitMat); shit.position.y = 0.85; stand.add(shit);
+    k.at(stand, 2.75, 0, -3.5);
+    api.spot("candle", stand, { walkTo: [2.75, -2.2], height: 1.9 });
+
     // ---- the spiral stair up to the next floor ----
     const spiral = k.group();
     const pillar = k.cylinder(0.22, 0.26, 7.6, WOOD_D, 8); spiral.add(pillar);
@@ -200,7 +269,12 @@ export default {
   update(api, st) {
     const hide = (obj, v) => obj && obj.traverse(o => { o.visible = v; });
     hide(api.books?.blue, !st.has("tookBlue"));
-    hide(api.books?.red, !st.has("tookRed"));
+    hide(api.books?.red, st.has("redBack"));
+    hide(api.ladderBook, !st.has("redBack"));
+    if (api.note) api.note.visible = !st.has("readNote");
+    const lit = st.has("lit");
+    if (api.lit) { api.lit[0].visible = lit; api.lit[1].visible = lit; api.lit[2].visible = lit; }
+    if (api.freshCandles) api.freshCandles.forEach(c => { c.visible = !lit; });
     if (api.specs) api.specs.visible = !st.has("gotGlasses");
     const open = !!st.open;
     hide(api.barrier, !open);

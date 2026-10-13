@@ -1,5 +1,5 @@
 // The Market. A teal-walled bazaar with three striped stalls and stairs going up on the right.
-// Spot ids (must match content.js): child, fseller, fruit, fishman, fish, jeweler, ring, stairs
+// Spot ids (must match content.js): master, child, fseller, fruit, fishman, fish, purse, jeweler, ring, honey, jars, stairs
 export default {
   sky: { top: "#8fd0c2", bottom: "#cfe9d8" },
   fog: { color: "#bfe0d2", near: 24, far: 60 },
@@ -96,12 +96,44 @@ export default {
     const jeweler = k.figure({ robe: "#5b2d6e", trim: "#f0b43c", mask: "#f4e6f0", hat: "crown" });
     k.at(jeweler, 5.4, 0, -3.3); api.spot("jeweler", jeweler, { walkTo: [5.9, -0.8] });
 
-    // ---- the child, on the left near a basket
+    // ---- the child, on the walkway left of the fruit stall
     const child = k.figure({ scale: 0.7, robe: "#e3a23d", trim: "#2f6d60", mask: "#fff3dc", hat: "hood" });
-    k.at(child, -9, 0, -1); child.rotation.y = 0.4; api.spot("child", child, { walkTo: [-8.6, 0.4] });
-    const basket = k.cylinder(0.35, 0.28, 0.4, "#b08440", 8); k.at(basket, -10, 0, -1.6); api.add(basket);
-    const pot = k.cylinder(0.25, 0.4, 0.8, "#c3452c", 8); k.at(pot, -10.4, 0, -3); api.add(pot);
-    const pot2 = k.cylinder(0.2, 0.32, 0.6, "#f0b43c", 8); k.at(pot2, -9.6, 0, -3.4); api.add(pot2);
+    k.at(child, -7.3, 0, 0.5); child.rotation.y = 0.35; api.spot("child", child, { walkTo: [-6.9, 1.9] });
+    const basket = k.cylinder(0.35, 0.28, 0.4, "#b08440", 8); k.at(basket, -7.9, 0, 0.1); api.add(basket);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.03, 6, 16, Math.PI), k.mat("#8a6430")); k.at(handle, -7.9, 0.4, 0.1); api.add(handle);
+
+    // ---- the honey seller (new), sitting on a stool by the left wall, a low table of jars in front
+    const stool = k.cylinder(0.32, 0.36, 0.5, "#6b4a2a", 10); k.at(stool, -9.6, 0, -2.6); api.add(stool);
+    const honey = k.figure({ model: "Mage", hideHat: true, sit: true, robe: "#d99a2b", trim: "#7a4a1a" });
+    k.at(honey, -9.6, 0.5, -2.6); honey.rotation.y = 0.25; api.spot("honey", honey, { walkTo: [-9.2, 0.3] });
+    // parasol over her
+    const pole = k.cylinder(0.05, 0.05, 3.4, "#4a2e1c", 6); k.at(pole, -10.5, 0, -2.9); api.add(pole);
+    const shade = k.cone(1.6, 0.7, "#f0b43c", 8); k.at(shade, -10.5, 3.4, -2.9); api.add(shade);
+    const hsign = k.sign("HONEY", { height: 0.45, bg: "#f6ead2" }); k.at(hsign, -9.6, 4.4, -5.5); api.add(hsign);
+    const jars = k.group();
+    const tbl = k.box(1.6, 0.55, 0.7, "#7a4a2a"); jars.add(tbl);
+    const ttop = k.box(1.7, 0.06, 0.8, "#5a3320"); k.at(ttop, 0, 0.55, 0); jars.add(ttop);
+    [[-0.55, 0.42], [0, 0.42], [0.55, 0.55]].forEach(([x, s]) => { const e = k.emoji("🍯", s); k.at(e, x, 0.58 + s / 2, 0); jars.add(e); });
+    const jplate = k.sign("HONEY · SMALL 3 · BIG 6", { height: 0.2 }); k.at(jplate, 0, 0.3, 0.36); jars.add(jplate);
+    k.at(jars, -9.4, 0, -1.4); jars.userData.height = 1.0;
+    api.spot("jars", jars, { walkTo: [-8.4, 0.2], height: 1.1 });
+    const pot = k.cylinder(0.25, 0.4, 0.8, "#c3452c", 8); k.at(pot, -10.8, 0, -1.6); api.add(pot);
+    const pot2 = k.cylinder(0.2, 0.32, 0.6, "#f0b43c", 8); k.at(pot2, -8.4, 0, -3.6); api.add(pot2);
+    // a few bees around the jars
+    api.bees = [0, 1, 2].map(i => { const b = k.emoji("🐝", 0.22); k.at(b, -9.4, 1.4, -1.4); api.add(b); return b; });
+
+    // ---- the jeweler's pink purse, forgotten on a barrel between the fruit and fish stalls
+    const barrel = k.group(k.cylinder(0.36, 0.32, 0.8, "#7a5232", 10));
+    [0.12, 0.66].forEach(y => { const r = k.cylinder(0.375, 0.375, 0.06, "#3a2a1c", 10); k.at(r, 0, y, 0); barrel.add(r); });
+    const purse = k.emoji("👛", 0.42); k.at(purse, 0, 1.0, 0.05); barrel.add(purse);
+    k.at(barrel, -2.5, 0, -1.0); barrel.userData.height = 1.2;
+    api.spot("purse", barrel, { walkTo: [-2.5, 0.4], height: 1.2 });
+    api.purse = purse;
+
+    // ---- the market master (new), with a spear, guarding the stairs
+    const master = k.figure({ model: "Knight", prop: "spear", robe: "#2f6d60", trim: "#f0b43c", scale: 1.1 });
+    k.at(master, 7.3, 0, 0.6); master.rotation.y = -0.35; api.spot("master", master, { walkTo: [6.8, 2.0] });
+    const board = k.sign("BUYERS ONLY", { height: 0.32, bg: "#f6ead2" }); k.at(board, 7.6, 4.95, -5.5); api.add(board);
 
     // ---- the stairs up, on the right, leading into the opening in the wall
     const st = k.group();
@@ -125,6 +157,7 @@ export default {
   },
 
   update(api, st) {
+    if (api.purse) api.purse.visible = !st.has("purse");
     const open = !!st.open;
     (api.stairsClosed || []).forEach(o => { o.visible = !open; });
     (api.stairsOpen || []).forEach(o => { o.visible = open; });
@@ -132,6 +165,7 @@ export default {
   },
 
   tick(api, t) {
+    (api.bees || []).forEach((b, i) => { const a = t * (1.3 + i * 0.4) + i * 2.1; b.position.set(-9.4 + Math.cos(a) * 0.7, 1.3 + Math.sin(a * 1.7) * 0.25, -1.4 + Math.sin(a) * 0.45); });
     if (api.stairsLight && api.stairsLight.intensity > 0) api.stairsLight.intensity = 5 + Math.sin(t * 2) * 1.2;
   },
 };

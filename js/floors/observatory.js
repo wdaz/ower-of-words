@@ -1,5 +1,5 @@
 // The Observatory. An open-air terrace at the top of the tower, under the night sky.
-// Spot ids (must match content.js): map, apprentice, telescope, astronomer, small, bright, red, ladder
+// Spot ids (must match content.js): map, apprentice, telescope, astronomer, mapmaker, weather, lens, vane, small, bright, red, ladder
 const reduceMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 // hide/show an object and every mesh in it (the engine's picker checks each hit mesh's own visibility)
@@ -33,7 +33,7 @@ export default {
 
   build(k, api) {
     const { THREE } = api;
-    api.spawn = [0, 3];
+    api.spawn = [2.2, 0.6];
     // we are at the top of the tower: hide the engine's endless ground so the night sky shows past the parapet
     api.scene.children.forEach(o => { if (o.isMesh && o.geometry?.parameters?.width === 200) o.visible = false; });
     const STONE = "#1a2148", DARK = "#11163a", GOLD = "#f4c95d", BRASS = "#c7a76a";
@@ -143,8 +143,8 @@ export default {
 
     // --- apprentice: small, hooded, holding a scroll ---
     const apprentice = k.figure({ scale: 0.85, robe: "#2f7a8a", trim: GOLD, mask: "#e6f2f4", hat: "hood", prop: "scroll" });
-    apprentice.position.set(-4.8, 0, -2.6); apprentice.rotation.y = 0.35;
-    api.spot("apprentice", apprentice, { walkTo: [-4.6, -1.0] });
+    apprentice.position.set(0.9, 0, -2.9); apprentice.rotation.y = -0.1;
+    api.spot("apprentice", apprentice, { walkTo: [0.9, -1.1] });
 
     // --- telescope: a brass tube on a wooden tripod, aimed at the sky ---
     const tel = k.group();
@@ -159,6 +159,7 @@ export default {
     const t2 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.14, 12), k.mat("#a0844a")); t2.position.y = 0.95; tube.add(t2);
     const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.3, 8), k.mat("#8a6e3a")); eye.position.y = -1.05; tube.add(eye);
     const lens = new THREE.Mesh(new THREE.CircleGeometry(0.18, 12), new THREE.MeshBasicMaterial({ color: "#9fc4ff" })); lens.rotation.x = -Math.PI / 2; lens.position.y = 1.03; tube.add(lens);
+    api.telLens = lens;
     tube.position.y = 1.72; tube.rotation.x = -1.0; tube.rotation.z = -0.15; tel.add(tube);
     const tsign = k.sign("TELESCOPE", { height: 0.2, bg: "#e8e2c8", ink: "#1a2148" }); tsign.position.set(0, 0.55, 0.42); tel.add(tsign);
     tel.position.set(-0.8, 0, -2.6);
@@ -167,8 +168,69 @@ export default {
     // --- astronomer: tall, deep-blue robe, gold tall hat, a staff ---
     const astro = k.figure({ scale: 1.2, robe: "#3a3f8f", trim: GOLD, mask: "#f2f0ff", hat: "tall", prop: "staff" });
     const orb = k.sphere(0.11, GOLD, 8); orb.position.set(0.6, 2.35, 0.12); astro.add(orb);
-    astro.position.set(3.2, 0, -3.0); astro.rotation.y = -0.25;
-    api.spot("astronomer", astro, { walkTo: [3.0, -1.2] });
+    astro.position.set(3.7, 0, -3.0); astro.rotation.y = -0.25;
+    api.spot("astronomer", astro, { walkTo: [3.4, -1.2] });
+
+    // --- mapmaker: sits on a stool behind a low desk at the front left, with her new map, ink and the lost lens ---
+    const stool = k.cylinder(0.3, 0.34, 0.45, "#4a3020", 8); stool.position.set(-6.6, 0, 0.4); api.add(stool);
+    const mapmaker = k.figure({ model: "Rogue", sit: true, robe: "#8a3f6e", trim: GOLD, prop: "book" });
+    mapmaker.position.set(-6.6, 0.45, 0.4); mapmaker.rotation.y = 0.15;
+    api.spot("mapmaker", mapmaker, { walkTo: [-7.2, 2.8] });
+    const desk = k.group();
+    const dtop = k.box(1.9, 0.08, 0.8, "#5a3a22"); dtop.position.y = 0.62; desk.add(dtop);
+    [[-0.85, -0.32], [0.85, -0.32], [-0.85, 0.32], [0.85, 0.32]].forEach(([x, z]) => { const l = k.box(0.08, 0.62, 0.08, "#3e2816"); l.position.set(x, 0, z); desk.add(l); });
+    const sheet = k.box(0.9, 0.02, 0.6, "#e8e2c8"); sheet.position.set(-0.3, 0.7, 0); sheet.rotation.y = 0.08; desk.add(sheet);
+    [[-0.55, 0.12], [-0.3, -0.1], [-0.1, 0.15], [0.0, -0.05], [-0.45, -0.18]].forEach(([x, z]) => {
+      const d = new THREE.Mesh(new THREE.CircleGeometry(0.03, 6), k.mat("#1a2148")); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.715, z); desk.add(d);
+    });
+    const ink = k.cylinder(0.07, 0.09, 0.14, "#101020", 8); ink.position.set(0.35, 0.66, -0.15); desk.add(ink);
+    const quill = k.box(0.02, 0.36, 0.02, "#f2efe6"); quill.position.set(0.37, 0.76, -0.15); quill.rotation.z = -0.35; desk.add(quill);
+    desk.position.set(-6.6, 0, 1.3); api.add(desk);
+    // the lens: a glass disc in a brass ring on a little stand, next to the ink pot
+    const lensG = k.group();
+    const lstand = k.box(0.06, 0.12, 0.06, BRASS); lensG.add(lstand);
+    const lring = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.03, 8, 20), k.mat(BRASS)); lring.position.y = 0.3; lensG.add(lring);
+    const lglass = new THREE.Mesh(new THREE.CircleGeometry(0.16, 20), new THREE.MeshBasicMaterial({ color: "#bcd8ff", transparent: true, opacity: 0.8, side: THREE.DoubleSide })); lglass.position.y = 0.3; lensG.add(lglass);
+    const lsh = glow(THREE, "#cfe2ff", 0.8, 0.6); lsh.position.y = 0.3; lensG.add(lsh);
+    lensG.position.set(-5.85, 0.66, 1.4);
+    api.spot("lens", lensG, { walkTo: [-5.6, 2.8], height: 1.2 });
+    api.deskLens = lensG;
+
+    // --- weather keeper: a sturdy figure in rust and green on the right, by the weather vane ---
+    const weather = k.figure({ model: "Barbarian", robe: "#a85a32", trim: "#6fa37a", prop: "staff", scale: 1.05 });
+    weather.position.set(6.9, 0, 0.3); weather.rotation.y = -0.3;
+    api.spot("weather", weather, { walkTo: [6.6, 2.0] });
+    const vane = k.group();
+    const vpole = k.cylinder(0.05, 0.07, 3.1, "#3a2a1c", 6); vane.add(vpole);
+    const vbase = k.cylinder(0.3, 0.36, 0.2, STONE, 8); vane.add(vbase);
+    // compass cross with N E S W letters
+    const cross = k.group();
+    [0, Math.PI / 2].forEach(a => { const b = k.box(1.0, 0.04, 0.04, BRASS); b.position.y = 0; b.rotation.y = a; cross.add(b); });
+    [["N", 0, -0.6], ["S", 0, 0.6], ["E", 0.6, 0], ["W", -0.6, 0]].forEach(([ch, x, z]) => {
+      const sgn = k.sign(ch, { height: 0.2, bg: "#e8e2c8", ink: "#1a2148" }); sgn.position.set(x, 0.05, z); cross.add(sgn);
+    });
+    cross.position.y = 2.7; vane.add(cross);
+    const arrow = k.group();
+    const shaft = k.box(1.2, 0.05, 0.05, GOLD); arrow.add(shaft);
+    const tip = k.cone(0.1, 0.25, GOLD, 4); tip.rotation.z = Math.PI / 2; tip.position.set(0.68, 0, 0); arrow.add(tip);
+    const tail = k.box(0.04, 0.28, 0.32, GOLD); tail.position.set(-0.58, -0.14, 0); arrow.add(tail);
+    const rooster = k.emoji("🐓", 0.55); rooster.position.set(0, 0.22, 0); arrow.add(rooster);
+    arrow.position.y = 3.05; vane.add(arrow);
+    const vsign = k.sign("WIND", { height: 0.22, bg: "#e8e2c8", ink: "#1a2148" }); vsign.position.set(0, 0.85, 0.12); vane.add(vsign);
+    vane.position.set(7.4, 0, -3.7);
+    api.spot("vane", vane, { walkTo: [7.0, -2.2], height: 3.6 });
+    api.vaneArrow = arrow;
+
+    // --- the comet: low in the east, under the red star, with a long tail (only at the end) ---
+    const comet = new THREE.Group();
+    comet.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), skyMat(THREE, "#f6fbff")));
+    comet.add(glow(THREE, "#bfe6ff", 1.8, 1));
+    for (let i = 1; i <= 14; i++) {
+      const g = glow(THREE, i < 6 ? "#d8f0ff" : "#8fb8ff", 1.5 - i * 0.07, 0.75 - i * 0.045);
+      g.position.set(i * 0.34, -i * 0.04, 0); comet.add(g);
+    }
+    comet.position.set(6.4, 3.3, -12); comet.rotation.z = 0.05;
+    api.add(comet); api.comet = comet;
 
     // --- ladder: up a stone turret on the right, to the summit ---
     const turret = k.cylinder(1.3, 1.45, 9, STONE, 10); turret.position.set(10.6, 0, -5); api.add(turret);
@@ -198,6 +260,11 @@ export default {
     const open = !!st.open;
     (api.ladderGlow || []).forEach(o => setVis(o, open));
     setVis(api.ladderBlock, !open);
+    // the lens: on the mapmaker's desk until you take it, then back in the telescope
+    const lens = st.has("lens");
+    setVis(api.deskLens, !lens);
+    setVis(api.telLens, lens);
+    setVis(api.comet, st.has("comet"));
   },
 
   tick(api, t) {
@@ -205,6 +272,8 @@ export default {
     (api.clouds || []).forEach(c => { c.position.x = c.userData.baseX + Math.sin(t * 0.12 + c.userData.phase) * 0.9; });
     if (api.brightGlow) { const s = 3.4 * (1 + Math.sin(t * 2.2) * 0.07); api.brightGlow.scale.set(s, s, s); }
     if (api.brightSpikes) api.brightSpikes.rotation.z = Math.sin(t * 0.6) * 0.08;
+    if (api.vaneArrow) api.vaneArrow.rotation.y = Math.PI / 2 + Math.sin(t * 0.8) * 0.18;
+    if (api.comet && api.comet.visible) api.comet.position.x = 6.4 - Math.sin(t * 0.05) * 0.3;
     if (api.starMat && api.starMat.opacity > 0.5) api.starMat.opacity = 0.85 + Math.sin(t * 1.7) * 0.1;
   },
 };

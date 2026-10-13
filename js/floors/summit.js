@@ -1,5 +1,5 @@
 // The Summit. The open top of the tower, above the clouds, where the elders of all peoples meet.
-// Spot ids (must match content.js): elder1, elder2, elder3, table, bell
+// Spot ids (must match content.js): elder1, elder2, elder3, scribe, messenger, table, book, stones, letter, bell
 export default {
   sky: { top: "#bfa9e8", bottom: "#f3b3a0" },
   fog: { color: "#e9b3b4", near: 26, far: 75 },
@@ -105,6 +105,54 @@ export default {
     const e3 = k.figure({ robe: "#2f6d60", trim: "#f0b43c", mask: "#f6ead2", hat: "turban", prop: "scroll", scale: 1.05 });
     e3.position.set(2.3, 0.3, -3.75); e3.rotation.y = -0.3; api.spot("elder3", e3, { walkTo: [2.4, 0.4], height: 2.9 });
 
+    // ---- the scribe at her low writing desk, on the left ----
+    const WOOD = "#6b4a2e", WOOD_D = "#4a2e1c";
+    const desk = k.group();
+    const dtop = k.box(1.9, 0.09, 0.85, WOOD); dtop.position.y = 0.72; desk.add(dtop);
+    [[-0.85, -0.35], [0.85, -0.35], [-0.85, 0.35], [0.85, 0.35]].forEach(([x, z]) => { const l = k.box(0.1, 0.72, 0.1, WOOD_D); l.position.set(x, 0, z); desk.add(l); });
+    const front = k.box(1.9, 0.4, 0.05, WOOD_D); front.position.set(0, 0.32, 0.42); desk.add(front);
+    const bookL = k.box(0.42, 0.05, 0.56, "#efe2c4"), bookR = k.box(0.42, 0.05, 0.56, "#efe2c4");
+    bookL.position.set(-0.23, 0.78, 0.02); bookL.rotation.z = 0.07; bookR.position.set(0.21, 0.78, 0.02); bookR.rotation.z = -0.07; desk.add(bookL, bookR);
+    const cover = k.box(0.92, 0.04, 0.62, "#6b3a5e"); cover.position.set(-0.01, 0.765, 0.02); desk.add(cover);
+    const stack = k.box(0.42, 0.22, 0.32, "#3a3f8f"); stack.position.set(0.68, 0.77, -0.12); stack.rotation.y = 0.2; desk.add(stack);
+    const ink = k.cylinder(0.08, 0.1, 0.14, "#1a1430", 8); ink.position.set(-0.7, 0.77, 0.1); desk.add(ink);
+    const quill = k.emoji("🪶", 0.42); quill.position.set(-0.68, 1.05, 0.1); desk.add(quill);
+    const dsign = k.sign("COUNCIL BOOK", { height: 0.2 }); dsign.position.set(0, 0.36, 0.46); desk.add(dsign);
+    desk.position.set(-5.6, 0, -2.0); api.spot("book", desk, { walkTo: [-4.7, -0.6], height: 1.3 });
+    const stool = k.cylinder(0.3, 0.34, 0.45, WOOD_D, 8); stool.position.set(-5.6, 0, -2.85); api.add(stool);
+    const scribe = k.figure({ model: "Rogue", sit: true, robe: "#c98a3a", trim: "#6b3a5e", prop: "scroll" });
+    scribe.position.set(-5.6, 0.45, -2.85);
+    api.spot("scribe", scribe, { walkTo: [-5.6, -0.6], height: 2.0 });
+
+    // the bowl of voting stones on a short column beside the desk (moved to the table for the vote)
+    const col = k.cylinder(0.32, 0.4, 0.8, STONE, 8); col.position.set(-7.6, 0, -1.9); api.add(col);
+    const colTop = k.box(0.8, 0.08, 0.8, DARK); colTop.position.set(-7.6, 0.8, -1.9); api.add(colTop);
+    const stones = k.group();
+    const bowl = k.cylinder(0.34, 0.22, 0.2, "#9a90a8", 12); stones.add(bowl);
+    [[-0.12, 0.05, "#f6f2ea"], [0.1, -0.08, "#f6f2ea"], [0.02, 0.13, "#1c1626"], [-0.05, -0.12, "#1c1626"], [0.15, 0.08, "#f6f2ea"]].forEach(([x, z, c]) => {
+      const st = k.sphere(0.08, c, 8); st.position.set(x, 0.22, z); st.scale.y = 0.7; stones.add(st);
+    });
+    stones.position.set(-7.6, 0.84, -1.9); api.spot("stones", stones, { walkTo: [-7.4, -0.6], height: 1.3 });
+    api.stones = stones;
+
+    // the messenger, who comes up the ladder later, out of breath
+    const messenger = k.figure({ model: "Mage", hideHat: true, robe: "#3f7f8a", trim: "#e8c26a" });
+    messenger.position.set(-9.2, 0, 0.9); messenger.rotation.y = 0.5;
+    api.spot("messenger", messenger, { walkTo: [-7.7, 2.0], height: 2.2 });
+    api.messenger = messenger;
+
+    // the letter the wind blew onto a column at the back, between the purple and the blue banners
+    const letter = k.group();
+    const paper = k.box(0.8, 0.55, 0.03, "#f1e4c6"); paper.position.y = 0; letter.add(paper);
+    const seal = k.sphere(0.07, "#b8322a", 8); seal.position.set(0, 0.0, 0.03); seal.scale.z = 0.4; letter.add(seal);
+    const env = k.emoji("✉️", 0.8); env.position.set(0, 0.62, 0.12); letter.add(env);
+    letter.position.set(9, 1.9, -5.85); letter.rotation.z = 0.25;
+    api.spot("letter", letter, { walkTo: [8.4, -1.6], height: 3.0 });
+    api.letter = letter;
+    // the same letter, opened on the council table once you have brought it
+    const tLetter = k.box(0.36, 0.02, 0.26, "#f1e4c6"); tLetter.position.set(-0.75, 0.93, -0.8); tLetter.rotation.y = 0.4; api.add(tLetter);
+    api.tableLetter = tLetter;
+
     // the bell: the way out, hanging in a frame on the right
     const bell = k.group();
     const bbase = k.box(3.2, 0.3, 1.3, DARK); bell.add(bbase);
@@ -143,6 +191,10 @@ export default {
     if (api.bellSparkle) api.bellSparkle.visible = open;
     if (api.bellLight) api.bellLight.intensity = open ? 8 : 0;
     api.bellOpen = open;
+    if (api.messenger) api.messenger.visible = st.has("messenger");
+    if (api.letter) api.letter.visible = st.has("messenger") && !st.has("gotLetter");
+    if (api.tableLetter) api.tableLetter.visible = st.has("gotLetter");
+    if (api.stones) { if (st.has("stones")) api.stones.position.set(-0.2, 0.92, -0.75); else api.stones.position.set(-7.6, 0.84, -1.9); }
     if (!open && api.bellPivot) api.bellPivot.rotation.z = 0;
   },
 
@@ -152,6 +204,7 @@ export default {
       if (api.bellGlow) api.bellGlow.material.opacity = 0.75 + Math.sin(t * 3) * 0.25;
     }
     if (api.clouds) api.clouds.rotation.y += dt * 0.01;
+    if (api.letter && api.letter.visible) api.letter.rotation.z = 0.25 + Math.sin(t * 4) * 0.12;
     if (api.banners) api.banners.forEach((b, i) => { b.rotation.x = Math.sin(t * 1.3 + i) * 0.05; });
   },
 };
