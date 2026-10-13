@@ -17,8 +17,8 @@ export function createEngine(container, { onSpot }) {
   const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-  // the traveler (white mask, red scarf)
-  const avatar = kit.figure({ robe: "#f4efe6", trim: "#c8402a", mask: "#ffffff", hat: "hood", scale: 0.95 });
+  // the traveler (red hood)
+  const avatar = kit.figure({ robe: "#f4efe6", cloth: "#b8402c", trim: "#c8402a", mask: "#ffffff", hat: "hood", scale: 0.95 });
   let target = null, arriveCb = null;
   const keys = new Set();
 
@@ -145,7 +145,7 @@ export function createEngine(container, { onSpot }) {
   }
   window.addEventListener("resize", resize);
 
-  const focusPos = new THREE.Vector3(), focusLook = new THREE.Vector3(), lookCur = new THREE.Vector3(0, 1.8, 0), closeOffset = new THREE.Vector3(2.4, 2.1, 4.2), focusHead = new THREE.Vector3();
+  const focusPos = new THREE.Vector3(), focusLook = new THREE.Vector3(), lookCur = new THREE.Vector3(0, 1.8, 0), closeOffset = new THREE.Vector3(3.1, 2.5, 4.1), focusHead = new THREE.Vector3();
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   function tick() {
     const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
@@ -187,5 +187,7 @@ export function createEngine(container, { onSpot }) {
   requestAnimationFrame(tick);
 
   function setTalking(id) { talkingSpot = id; }
-  return { setTalking, loadFloor, refresh, setMarkers, goToSpot, walkTo, resize, get api() { return api; }, renderer, camera };
+  // a task is solved: the traveler and the one who asked celebrate
+  function cheer(id) { const s = spots?.get(id); if (s) s.obj.traverse(o => { if (o.userData.figure) kit.cheer(o); }); kit.cheer(avatar); }
+  return { setTalking, cheer, loadFloor, refresh, setMarkers, goToSpot, walkTo, resize, get api() { return api; }, renderer, camera };
 }

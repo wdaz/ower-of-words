@@ -2,6 +2,7 @@
 // The 3D world lives in engine.js and floors/floorN.js; this file never touches Three.js directly.
 import { FLOORS } from "./content.js";
 import { createEngine } from "./engine.js";
+import { loadCharacters } from "./characters.js";
 
 /* ======================= STATE ======================= */
 const KEY="tower-of-words-3d-v1";
@@ -83,6 +84,7 @@ function lineEl(text){
 }
 
 /* ======================= SCENE ======================= */
+await loadCharacters(); // rigged people; falls back to the procedural ones if this fails
 const engine=createEngine(stage,{onSpot:id=>clickSpot(id)});engineRef=engine;
 const floorMods={};
 async function floorModule(i){
@@ -174,7 +176,7 @@ function completeTask(t){
   const fs=FS(),fl=F();
   if(t.flagAfter)fs.flags.push(t.flagAfter);
   fs.task++;fs.talked=false;save();
-  renderScene();renderQuest();
+  renderScene();renderQuest();engine.cheer(t.npc);
   const sp=fl.spots.find(s=>s.id===t.npc);
   if(t.done) showLines(sp.npc,[t.done],d=>{
     if(tasksDone(S.floor)&&!journalDone(S.floor)){const b=$(`<button class="btn primary">Dəftəri aç</button>`);b.onclick=openJournal;d.appendChild($(`<div class="row"></div>`)).appendChild(b);}

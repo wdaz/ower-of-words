@@ -98,7 +98,7 @@ export default {
     table.position.set(0, 0, -1.4); api.spot("table", table, { walkTo: [1.4, 0.9], height: 1.5 });
 
     // the three elders, standing on the dais behind the table
-    const e1 = k.figure({ robe: "#b85a3a", trim: GOLD, mask: "#f4e8d2", hat: "tall", prop: "staff", scale: 1.05 });
+    const e1 = k.figure({ model: "Knight", hideHat: true, robe: "#b85a3a", trim: GOLD, mask: "#f4e8d2", hat: "tall", prop: "staff", scale: 1.05 });
     e1.position.set(-2.3, 0.3, -3.75); e1.rotation.y = 0.3; api.spot("elder1", e1, { walkTo: [-2.4, 0.4], height: 3.0 });
     const e2 = k.figure({ robe: "#3a3f8f", trim: "#f4c95d", mask: "#f2f0ff", hat: "crown", prop: "book", scale: 1.2 });
     e2.position.set(0, 0.3, -3.85); api.spot("elder2", e2, { walkTo: [0, 0.6], height: 3.2 });

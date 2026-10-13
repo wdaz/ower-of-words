@@ -8,6 +8,9 @@ journal from pictures, solve tasks by understanding what people ask, build answe
 - **3D version** (main page, `index.html` + `js/`): Three.js 0.160 from the jsDelivr CDN, no build step.
   - `js/content.js` story, words and tasks; `js/game.js` dialogue, journal, speech; `js/engine.js` camera,
     click-to-walk and clickable spots; `js/kit.js` shape helpers; `js/floors/floor1-5.js` one scene per floor.
+  - `js/characters.js` loads the rigged, animated people (KayKit Adventurers, CC0) from `assets/characters/`:
+    idle, walk, sit, gestures while talking, a cheer when a task is solved, heads that turn to look at you.
+    If the models cannot load, `js/kit.js` falls back to its procedural figures.
   - Walk by tapping the ground (or W A S D), tap characters and objects to talk and read.
 - **2D version** (`2d/index.html`): a single self-contained file with SVG scenes.
 - Speech: Web Speech API (text-to-speech for characters, speech recognition for your answers).

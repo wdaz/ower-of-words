@@ -41,7 +41,7 @@ export default {
 
     // tired pilgrim, sitting on a rock
     const rock = k.sphere(0.7, "#8a6a55", 7); rock.scale.y = 0.5; rock.position.set(-1, 0.25, -1.2); api.add(rock);
-    const pilgrim = k.figure({ sit: true, robe: "#7a6a8c", trim: "#d9b44a", mask: "#d8c8b0", hat: "hood", prop: "staff" });
+    const pilgrim = k.figure({ model: "Rogue", sit: true, sitOn: "floor", robe: "#7a6a8c", trim: "#d9b44a", mask: "#d8c8b0", hat: "hood", prop: "staff" });
     pilgrim.position.set(-1, 0.45, -1.2); pilgrim.rotation.y = 0.3; api.spot("pilgrim", pilgrim, { walkTo: [-1, 0.6] });
 
     // key on a hook on the wall

@@ -1,6 +1,7 @@
 // Building blocks for the tower's floors: flat-shaded, Chants-of-Sennaar-like shapes.
 // Every helper returns a THREE.Object3D positioned at the origin; the caller places it.
 import * as THREE from "three";
+import { charactersReady, makeCharacter, hand } from "./characters.js";
 
 const matCache = new Map();
 export function mat(color, opts = {}) {
@@ -78,6 +79,7 @@ export function stairs(n, w, sh, sd, color) {
 //  prop: "spear"|"staff"|"book"|"scroll"|none, scale, sit (boolean)
 // Structure: root group (placed by the caller) > rig (sways, breathes) > body parts, arms, head group.
 export function figure(o = {}) {
+  if (charactersReady() && !o.procedural) return riggedFigure(o);
   const g = new THREE.Group(), rig = new THREE.Group(); g.add(rig);
   const s = o.scale || 1, robe = o.robe || "#8a6a5a", trim = o.trim || "#d9b44a";
   const skin = o.skin || SKINS[Math.abs(hash(robe + (o.hat || ""))) % SKINS.length], hair = o.hair || HAIRS[Math.abs(hash(trim + robe)) % HAIRS.length];
@@ -162,6 +164,7 @@ export function figure(o = {}) {
 const _v = new THREE.Vector3();
 export function animateFigure(g, t, dt, st = {}) {
   const f = g.userData.figure; if (!f) return;
+  if (f.ch) return animateRigged(g, f, t, dt, st);
   const ph = f.phase, k = Math.min(1, dt * 6);
   if (f.yaw === null) f.yaw = g.rotation.y;
   f.talk += ((st.talking ? 1 : 0) - f.talk) * Math.min(1, dt * 5);
@@ -205,6 +208,97 @@ export function animateFigure(g, t, dt, st = {}) {
   f.nextBlink -= dt;
   if (f.nextBlink < 0) { f.eyes.scale.y = 0.1; if (f.nextBlink < -0.12) { f.eyes.scale.y = 1; f.nextBlink = 2 + Math.random() * 4; } }
 }
+// ---- rigged characters (js/characters.js): skeletal clips from the model, look-at and talk on top ----
+function riggedFigure(o) {
+  const ch = makeCharacter(o), g = new THREE.Group(); g.add(ch.model);
+  const s = o.scale || 1;
+  // props the model does not carry itself are made here and put in the right hand
+  if (o.prop && !ch.ownProp) {
+    const p = new THREE.Group();
+    if (o.prop === "spear" || o.prop === "staff") {
+      const len = (o.prop === "spear" ? 2.4 : 1.8) * s;
+      const pole = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.03 * s, len, 6), mat("#4a2e1c")));
+      pole.position.y = len * 0.25; p.add(pole);
+      if (o.prop === "spear") { const tip = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.07 * s, 0.28 * s, 6), mat(o.trim || "#d9b44a"))); tip.position.y = len * 0.75 + 0.14 * s; p.add(tip); }
+    } else if (o.prop === "book") {
+      p.add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.28 * s, 0.2 * s, 0.07 * s), mat(o.trim || "#a3543c"))));
+    } else if (o.prop === "scroll") {
+      const sc = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.045 * s, 0.045 * s, 0.36 * s, 6), mat("#efe2c4"))); sc.rotation.z = Math.PI / 2; p.add(sc);
+    }
+    // place it at the hand in the resting pose, then let the hand bone carry it
+    ch.model.updateMatrixWorld(true);
+    hand(ch).getWorldPosition(p.position);
+    ch.model.add(p); p.position.copy(ch.model.worldToLocal(p.position)); p.scale.setScalar(1 / ch.scale);
+    ch.model.updateMatrixWorld(true); hand(ch).attach(p);
+  }
+  g.userData.height = ch.height + 0.25 * s;
+  g.userData.figure = { ch, cur: ch.base, phase: Math.random() * 10, yaw: null, talk: 0, hy: 0, hp: 0, nextGesture: 0, gesture: null, posed: false };
+  ch.mixer.addEventListener("finished", e => {
+    const f = g.userData.figure; if (e.action !== f.gesture) return;
+    e.action.fadeOut(0.3); ch.actions[f.cur].reset().fadeIn(0.3).play(); f.gesture = null;
+  });
+  return g;
+}
+
+// one-shot clip (a gesture, a cheer), blending back into the loop when done
+function playOnce(f, name) {
+  const a = f.ch.actions[name]; if (!a || f.gesture) return;
+  a.reset().setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = false;
+  f.ch.actions[f.cur].fadeOut(0.25); a.fadeIn(0.25).play(); f.gesture = a;
+}
+export function cheer(g) { const f = g?.userData.figure; if (f?.ch && !f.ch.base.startsWith("Sit")) playOnce(f, "Cheer"); }
+
+const _q = new THREE.Quaternion(), _qg = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _e = new THREE.Euler();
+const GESTURES = ["Interact", "Use_Item"];
+function animateRigged(g, f, t, dt, st) {
+  const ch = f.ch;
+  if (f.yaw === null) f.yaw = g.rotation.y;
+  f.talk += ((st.talking ? 1 : 0) - f.talk) * Math.min(1, dt * 5);
+  if (st.still) { if (!f.posed) { ch.mixer.update(0); f.posed = true; } return; }
+
+  // loop: walk while moving, otherwise the figure's idle (standing or sitting)
+  const want = st.walking ? "Walking_A" : ch.base;
+  if (want !== f.cur) {
+    if (st.walking && f.gesture) { f.gesture.fadeOut(0.2); f.gesture = null; } // walking cuts a gesture short
+    if (!f.gesture) { ch.actions[f.cur].fadeOut(0.2); ch.actions[want].reset().fadeIn(0.2).play(); }
+    f.cur = want;
+  }
+  // a hand gesture now and then while speaking
+  if (st.talking && !st.walking && !ch.base.startsWith("Sit") && t > f.nextGesture) {
+    playOnce(f, GESTURES[Math.floor(Math.random() * GESTURES.length)]);
+    f.nextGesture = t + 3 + Math.random() * 3;
+  }
+
+  if (st.turnTo) { g.getWorldPosition(_v); const w = Math.atan2(st.turnTo.x - _v.x, st.turnTo.z - _v.z); g.rotation.y += angleDelta(g.rotation.y, w) * Math.min(1, dt * 3); }
+  else if (!st.walking && !st.keepYaw) g.rotation.y += angleDelta(g.rotation.y, f.yaw) * Math.min(1, dt * 1.5);
+
+  // the mixer only writes a bone when the clip's value changes, so undo last frame's head turn
+  // first; otherwise it would pile up on a still clip
+  const head = ch.bones.head;
+  if (head && f.animQ) head.quaternion.copy(f.animQ);
+  ch.mixer.update(dt);
+  if (head) (f.animQ ||= new THREE.Quaternion()).copy(head.quaternion);
+
+  // head on top of the clip: look at a target, else glance around; nod while talking
+  const ph = f.phase, k = Math.min(1, dt * 6);
+  let yaw = Math.sin(t * 0.35 + ph) * 0.35 * (Math.sin(t * 0.13 + ph * 2) > 0.3 ? 1 : 0.2), pitch = 0;
+  if (st.lookAt && head) {
+    head.getWorldPosition(_v);
+    yaw = THREE.MathUtils.clamp(angleDelta(g.rotation.y, Math.atan2(st.lookAt.x - _v.x, st.lookAt.z - _v.z)), -1, 1);
+    pitch = THREE.MathUtils.clamp(-Math.atan2(st.lookAt.y - _v.y, Math.hypot(st.lookAt.x - _v.x, st.lookAt.z - _v.z)), -0.35, 0.35);
+  }
+  if (st.walking) { yaw *= 0.3; pitch = 0; }
+  f.hy += (yaw - f.hy) * k; f.hp += (pitch - f.hp) * k;
+  if (head) {
+    // the bone's own axes are not the body's, so build the turn in the figure's space and carry it over
+    const nod = Math.sin(t * 8 + ph) * 0.07 * f.talk, tilt = Math.sin(t * 4.5) * 0.06 * f.talk;
+    head.updateWorldMatrix(true, false);
+    g.getWorldQuaternion(_qg); head.parent.getWorldQuaternion(_qp); head.getWorldQuaternion(_qb);
+    _q.setFromEuler(_e.set(f.hp + nod, f.hy, tilt, "YXZ")).premultiply(_qg).multiply(_qg.invert()); // turn about the figure's axes, in world space
+    head.quaternion.copy(_qp.invert().multiply(_q.multiply(_qb)));
+  }
+}
+
 const SKINS = ["#e9c3a0", "#d9a77f", "#c08a62", "#a36f4c", "#7d5236", "#f0d2b6"];
 const HAIRS = ["#2b1d16", "#4a3022", "#6b4a2e", "#1f1a1a", "#8c8278"];
 function hash(str) { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) | 0; return h; }
