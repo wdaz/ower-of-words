@@ -174,7 +174,7 @@ export function createEngine(container, { onSpot }) {
       if (floor.tick) floor.tick(api, t, dt);
       // follow the traveler; during a conversation, frame both faces up close
       const fs = focusSpot && spots.get(focusSpot);
-      if (fs) { fs.obj.getWorldPosition(focusPos); focusHead.set(focusPos.x, fs.height - 0.3, focusPos.z); focusPos.lerp(avatar.position, 0.4); focusLook.set(focusPos.x, fs.height * 0.5, focusPos.z - 0.6); // aim low: the dialogue box covers the bottom of the picture }
+      if (fs) { fs.obj.getWorldPosition(focusPos); focusHead.set(focusPos.x, fs.height - 0.3, focusPos.z); focusPos.lerp(avatar.position, 0.4); focusLook.set(focusPos.x, fs.height * 0.5, focusPos.z - 0.6); } // aim low: the dialogue box covers the bottom
       else { focusPos.copy(avatar.position); focusLook.set(avatar.position.x, 1.8, avatar.position.z - 4); }
       const want = focusPos.clone().add(fs ? closeOffset : camOffset);
       const a = reduceMotion ? 1 : Math.min(1, dt * 2.5);
