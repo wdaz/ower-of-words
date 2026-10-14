@@ -58,7 +58,24 @@ function scoreSpeech(target,heard){
   for(let i=0,j=0;i<a.length&&j<b.length;){if(a[i]===b[j]){hit[i]=true;i++;j++;}else if(L[i+1][j]>=L[i][j+1])i++;else j++;}
   return {score:a.length?L[0][0]/a.length:0,words:a,hit};
 }
-const PASS=.75;
+/* ======================= DIFFICULTY ======================= */
+// Gets harder while you answer right on the first try, eases off after several misses in a row.
+// Higher levels: stricter speaking, extra word tiles, decoy pictures in the journal, and at the top level
+// the characters' words are hidden until you have listened (or ask for the text).
+const LEVELS=["Asan","Orta","Çətin","Usta"];
+const lvl=()=>S.skill||0;
+let tries=0; // wrong attempts on the current question
+function toast(text){const t=$(`<div class="toast" role="status">${esc(text)}</div>`);document.getElementById("stage").appendChild(t);setTimeout(()=>t.remove(),3200);}
+function rightAnswer(){
+  if(tries===0){S.misses=0;S.streak=(S.streak||0)+1;if(S.streak>=4&&lvl()<3){S.skill=lvl()+1;S.streak=0;toast(`Əla! Çətinlik artdı: ${LEVELS[S.skill]}`);renderQuest();}}
+  tries=0;save();
+}
+function wrongAnswer(){
+  tries++;S.streak=0;S.misses=(S.misses||0)+1;
+  if(S.misses>=4&&lvl()>0){S.skill=lvl()-1;S.misses=0;toast(`Çətinlik azaldı: ${LEVELS[S.skill]}`);renderQuest();}
+  save();
+}
+const passMark=()=>[.75,.82,.88,.92][lvl()];
 
 /* ======================= DOM HELPERS ======================= */
 const $=h=>{const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstElementChild;};
@@ -118,11 +135,16 @@ function renderQuest(){
   if(t) text=fs.talked&&t.doHint?t.doHint:t.hint;
   else if(!journalDone(S.floor)) text=`Dəftəri aç: ${pagesOf(S.floor).length-fs.sealed.length} səhifəni deşifrə et. Sözləri personajların danışığından topladın.`;
   else text=S.floor===FLOORS.length-1?"Zəngi çal.":"Yol açıqdır. Yuxarı qalx.";
-  quest.innerHTML=`<span class="label">${esc(fl.people)} · ${fl.cefr}</span><span class="place">${esc(fl.name)}</span><span class="text">${esc(text)}</span>`;
+  quest.innerHTML=`<span class="label">${esc(fl.people)} · ${fl.cefr} · ${LEVELS[lvl()]}</span><span class="place">${esc(fl.name)}</span><span class="text">${esc(text)}</span>`;
   const fb=document.getElementById("floors");fb.innerHTML="";
   FLOORS.forEach((_,i)=>fb.appendChild($(`<span class="${i===S.floor?"on":exitOpen(i)?"done":""}" style="height:${10+i*5}px" title="${esc(FLOORS[i].name)}"></span>`)));
 }
-function updateCount(){const fs=FS();document.getElementById("jcount").textContent=fs.seen.length+"/"+F().words.length;}
+function updateCount(){
+  const fs=FS(),btn=document.getElementById("journalBtn");document.getElementById("jcount").textContent=fs.seen.length+"/"+F().words.length;
+  // remind now and then that heard words are waiting for a picture
+  const waiting=pagesOf(S.floor).some((_,i)=>pageNeeds(S.floor,i)||pageReady(S.floor,i));
+  btn.classList.toggle("nudge",waiting);btn.title=waiting?"Dəftərdə doldurulmalı sözlər var":"";
+}
 
 /* ======================= DIALOGUE ======================= */
 function speakerHead(name,lines,who){
@@ -135,6 +157,9 @@ function showLines(name,lines,after,who){
   who=who||(F().spots.find(s=>s.npc&&s.npc===name)||{}).id;
   dialog.innerHTML="";dialog.appendChild(speakerHead(name,lines,who));
   lines.forEach(l=>dialog.appendChild(lineEl(l)));
+  // top level: listen first; the words appear when you ask for them
+  if(lvl()>=3&&name){const ls=[...dialog.querySelectorAll(".line")];ls.forEach(l=>l.classList.add("veil"));
+    const b=$(`<button class="btn reveal">Mətni göstər</button>`);b.onclick=()=>{ls.forEach(l=>l.classList.remove("veil"));b.remove();};ls[ls.length-1]?.after(b);}
   speak(lines.join(" "),0,who);
   if(after)after(dialog);
 }
@@ -165,6 +190,7 @@ function clickSpot(id){
 }
 
 function runTask(t,sp){
+  tries=0;
   const lines=t.type==="talk"?[...(t.say||[]),...(t.turns[0].q||[])]:t.say;
   showLines(sp.npc,lines,d=>{
     if(t.type==="fetch") d.appendChild($(`<p class="hint">${esc(t.doHint)}</p>`));
@@ -196,10 +222,10 @@ function talkUI(t,sp,d,k){
     const b=$(`<button class="opt">${esc(o)}</button>`);
     b.onclick=()=>{
       speak(o);
-      if(i!==turn.a){b.classList.add("wrong");msg.className="msg bad";msg.innerHTML="";
+      if(i!==turn.a){wrongAnswer();b.classList.add("wrong");msg.className="msg bad";msg.innerHTML="";
         if(turn.wrong){msg.appendChild(lineEl(turn.wrong));setTimeout(()=>speak(turn.wrong,0,sp.id),900);}
         msg.appendChild($(`<span class="hint">Bu cavab uyğun gəlmir. Yenə seç.</span>`));return;}
-      box.remove();msg.remove();
+      rightAnswer();box.remove();msg.remove();
       if(turn.speak){speakUI(o,d,next);return;}
       setTimeout(next,900);
     };
@@ -216,12 +242,12 @@ function listenUI(t,d){
   const ask=()=>{
     if(k>=t.qs.length)return completeTask(t);
     const q=t.qs[k];area.innerHTML="";
-    area.appendChild($(`<p class="hint">Sual ${k+1}/${t.qs.length}${q.az?` · ${esc(q.az)}`:""}</p>`));
+    area.appendChild($(`<p class="hint">Sual ${k+1}/${t.qs.length}${q.az&&lvl()<2?` · ${esc(q.az)}`:""}</p>`));
     area.appendChild(lineEl(q.q));
     const box=$(`<div class="opts"></div>`),msg=$(`<p class="msg"></p>`);
     q.opts.map((o,i)=>[o,i]).sort(()=>Math.random()-.5).forEach(([o,i])=>{
       const b=$(`<button class="opt">${esc(o)}</button>`);
-      b.onclick=()=>{if(i===q.a){k++;setTimeout(ask,500);}else{b.classList.add("wrong");msg.className="msg bad";msg.textContent="Yox. ▶ ilə yenidən dinlə.";}};
+      b.onclick=()=>{if(i===q.a){rightAnswer();k++;setTimeout(ask,500);}else{wrongAnswer();b.classList.add("wrong");msg.className="msg bad";msg.textContent="Yox. ▶ ilə yenidən dinlə.";}};
       box.appendChild(b);
     });
     area.append(box,msg);
@@ -243,7 +269,7 @@ function choiceUI(t,d){
   const box=$(`<div class="opts"></div>`),msg=$(`<p class="msg"></p>`);
   t.opts.map((o,i)=>[o,i]).sort(()=>Math.random()-.5).forEach(([o,i])=>{
     const b=$(`<button class="opt">${esc(o)}</button>`);
-    b.onclick=()=>{speak(o);if(i===t.a)setTimeout(()=>completeTask(t),900);else{b.classList.add("wrong");msg.className="msg bad";msg.textContent="Yox, bir daha dinlə.";}};
+    b.onclick=()=>{speak(o);if(i===t.a){rightAnswer();setTimeout(()=>completeTask(t),900);}else{wrongAnswer();b.classList.add("wrong");msg.className="msg bad";msg.textContent="Yox, bir daha dinlə.";}};
     box.appendChild(b);
   });
   d.append(box,msg);
@@ -251,7 +277,8 @@ function choiceUI(t,d){
 
 function buildUI(t,d){
   const target=t.answer.split(" ");
-  const pool=[...target,...t.extra].map((w,i)=>({w,i})).sort(()=>Math.random()-.5);
+  const more=F().words.map(x=>x.w).filter(w=>!target.includes(w)&&!t.extra.includes(w)).sort(()=>Math.random()-.5).slice(0,2*lvl());
+  const pool=[...target,...t.extra,...more].map((w,i)=>({w,i})).sort(()=>Math.random()-.5);
   let built=[];
   d.appendChild($(`<p class="hint">Cavabı sözlərdən qur, sonra ucadan de.</p>`));
   const area=$(`<div class="built" aria-label="Sənin cümlən"></div>`),tiles=$(`<div class="tiles"></div>`),msg=$(`<p class="msg"></p>`);
@@ -264,8 +291,8 @@ function buildUI(t,d){
   clr.onclick=()=>{built=[];draw();};
   chk.onclick=()=>{
     const s=built.map(x=>x.w).join(" ");
-    if(norm(s).join(" ")===norm(t.answer).join(" ")){ msg.className="msg ok";msg.textContent="Doğrudur! İndi bunu ucadan de.";area.remove();tiles.remove();row.remove();speakUI(t.answer,d,()=>completeTask(t)); }
-    else{msg.className="msg bad";msg.textContent=built.length<target.length?"Cümlə tam deyil.":"Söz sırası və ya sözlər səhvdir.";}
+    if(norm(s).join(" ")===norm(t.answer).join(" ")){ rightAnswer(); msg.className="msg ok";msg.textContent="Doğrudur! İndi bunu ucadan de.";area.remove();tiles.remove();row.remove();speakUI(t.answer,d,()=>completeTask(t)); }
+    else{wrongAnswer();msg.className="msg bad";msg.textContent=built.length<target.length?"Cümlə tam deyil.":"Söz sırası və ya sözlər səhvdir.";}
   };
   draw();d.append(area,tiles,row,msg);
 }
@@ -278,7 +305,7 @@ function speakUI(target,d,onPass){
     const r=scoreSpeech(target,text);
     heard.innerHTML=r.words.map((w,k)=>`<span class="${r.hit[k]?"hit":"miss"}">${esc(w)}</span>`).join(" ");
     bar.style.width=Math.round(r.score*100)+"%";
-    if(r.score>=PASS){msg.className="msg ok";msg.textContent=`Səni anladılar (${Math.round(r.score*100)}%).`;setTimeout(onPass,1100);}
+    if(r.score>=passMark()){msg.className="msg ok";msg.textContent=`Səni anladılar (${Math.round(r.score*100)}%).`;setTimeout(onPass,1100);}
     else{msg.className="msg bad";msg.textContent=`${Math.round(r.score*100)}%. Qırmızı sözlərə diqqət et və yenə de.`;}
   };
   const build=()=>{
@@ -323,59 +350,83 @@ function freeUI(t,d){
 }
 
 /* ======================= JOURNAL ======================= */
-let jTab=null,picking=null;
-function openJournal(){jTab=S.floor;picking=null;drawJournal();}
+let jTab=null,jPage=0,picking=null;
+const hashStr=s=>{let h=0;for(const c of s)h=(h*31+c.codePointAt(0))|0;return Math.abs(h);};
+// a page still waiting for the player: some of its words are heard but not matched to a picture yet
+const pageNeeds=(fi,pi)=>{const fs=S.f[fi],pg=pagesOf(fi)[pi];return !fs.sealed.includes(pi)&&pg.some(x=>fs.seen.includes(x.w)&&!fs.guess[x.w]);};
+const pageReady=(fi,pi)=>{const fs=S.f[fi],pg=pagesOf(fi)[pi];return !fs.sealed.includes(pi)&&pg.every(x=>fs.seen.includes(x.w)&&fs.guess[x.w]);};
+function openJournal(){
+  jTab=S.floor;picking=null;
+  // open on the page that needs attention first, else the first unsealed one
+  const n=pagesOf(jTab).length,fs=S.f[jTab];
+  jPage=[...Array(n).keys()].find(i=>pageReady(jTab,i)||pageNeeds(jTab,i))??[...Array(n).keys()].find(i=>!fs.sealed.includes(i))??0;
+  drawJournal();
+}
+// The journal shows one page at a time, with the pictures beside it, so nothing needs scrolling.
 function drawJournal(){
   layer.innerHTML="";
-  const ov=$(`<div class="overlay" role="dialog" aria-modal="true" aria-label="Dəftər"></div>`),sh=$(`<div class="sheet"></div>`);ov.appendChild(sh);
+  const ov=$(`<div class="overlay" role="dialog" aria-modal="true" aria-label="Dəftər"></div>`),sh=$(`<div class="sheet journal"></div>`);ov.appendChild(sh);
   ov.onclick=e=>{if(e.target===ov)closeLayer();};
-  sh.appendChild($(`<div class="row"><h2 class="flex1">Səyyahın dəftəri</h2><button class="btn" id="jclose">Bağla</button></div>`));
-  sh.querySelector("#jclose").onclick=closeLayer;
+  const fi=jTab,fs=S.f[fi],words=FLOORS[fi].words,pages=pagesOf(fi),pi=Math.min(jPage,pages.length-1),pg=pages[pi];
+  const head=$(`<div class="row"><h2 class="flex1">Səyyahın dəftəri</h2><button class="btn" id="jclose">Bağla</button></div>`);
+  head.querySelector("#jclose").onclick=closeLayer;sh.appendChild(head);
   const tabs=$(`<div class="tabs" role="tablist"></div>`);
-  FLOORS.forEach((fl,i)=>{if(i>S.floor)return;const b=$(`<button role="tab" aria-selected="${i===jTab}">${esc(fl.name)}</button>`);b.onclick=()=>{jTab=i;picking=null;drawJournal();};tabs.appendChild(b);});
+  FLOORS.forEach((fl,i)=>{if(i>S.floor)return;const b=$(`<button role="tab" aria-selected="${i===jTab}">${esc(fl.name)}</button>`);b.onclick=()=>{jTab=i;jPage=0;picking=null;drawJournal();};tabs.appendChild(b);});
   sh.appendChild(tabs);
-  const fi=jTab,fs=S.f[fi],words=FLOORS[fi].words;
-  sh.appendChild($(`<p class="hint">Personajların danışığında altından xətt çəkilmiş sözlər bura yazılır. Hər sözün xanasına toxun və mənasına uyğun şəkli seç. Səhifənin 4 sözü də doğru olanda səhifə möhürlənir və tərcümə açılır.</p>`));
-  const pages=$(`<div class="pages"></div>`);
-  pagesOf(fi).forEach((pg,pi)=>{
-    const sealed=fs.sealed.includes(pi);
-    const el=$(`<div class="page${sealed?" sealed":""}"><h3>Səhifə ${pi+1}${sealed?"<small>Deşifrə edildi</small>":""}</h3></div>`);
-    pg.forEach(x=>{
-      const seen=fs.seen.includes(x.w),g=sealed?x.p:fs.guess[x.w];
-      const e=$(`<div class="entry"><button class="slot${g?" filled":""}${picking===x.w?" picking":""}">${g||""}</button><div class="w${seen?"":" unknown"}">${seen?esc(x.w):"· · ·"}${sealed?`<span class="az">${esc(x.az)}</span>`:""}</div></div>`);
-      const slot=e.querySelector(".slot");
-      slot.setAttribute("aria-label",seen?`${x.w}: şəkil seç`:"Hələ tapılmayıb");
-      if(sealed||!seen)slot.disabled=true;else slot.onclick=()=>{picking=picking===x.w?null:x.w;speak(x.w);drawJournal();};
-      if(seen){e.querySelector(".w").style.cursor="pointer";e.querySelector(".w").onclick=()=>speak(x.w);}
-      el.appendChild(e);
-    });
-    if(!sealed){
-      const allSeen=pg.every(x=>fs.seen.includes(x.w)),allSet=pg.every(x=>fs.guess[x.w]);
-      const msg=$(`<p class="msg"></p>`),chk=$(`<button class="btn primary">Səhifəni yoxla</button>`);
-      chk.disabled=!(allSeen&&allSet);
-      if(!allSeen){msg.className="msg";msg.innerHTML=`<span class="hint">Bu səhifənin bütün sözlərini hələ eşitməmisən.</span>`;}
-      chk.onclick=()=>{
-        const wrong=pg.filter(x=>fs.guess[x.w]!==x.p).length;
-        if(!wrong){fs.sealed.push(pi);save();pg.forEach((x,i)=>setTimeout(()=>speak(x.w),i*800));drawJournal();renderQuest();renderScene();return;}
-        msg.className="msg bad";msg.textContent=wrong===1?"Az qaldı: yalnız bir söz səhvdir.":"Hələ deyil. Bəzi mənalar səhvdir.";
-      };
-      el.append(chk,msg);
-    }
-    pages.appendChild(el);
+
+  // page switcher: arrows and one dot per page (green = sealed, pulsing = waits for you)
+  const nav=$(`<div class="jnav"><button class="icon" aria-label="Əvvəlki səhifə">‹</button><div class="dots"></div><button class="icon" aria-label="Növbəti səhifə">›</button></div>`);
+  const [prev,next]=nav.querySelectorAll(".icon");prev.disabled=pi===0;next.disabled=pi===pages.length-1;
+  prev.onclick=()=>{jPage=pi-1;picking=null;drawJournal();};next.onclick=()=>{jPage=pi+1;picking=null;drawJournal();};
+  pages.forEach((_,i)=>{const d=$(`<button class="dot${fs.sealed.includes(i)?" sealed":""}${i===pi?" on":""}${i!==pi&&(pageNeeds(fi,i)||pageReady(fi,i))?" nudge":""}" aria-label="Səhifə ${i+1}">${i+1}</button>`);d.onclick=()=>{jPage=i;picking=null;drawJournal();};nav.querySelector(".dots").appendChild(d);});
+
+  const body=$(`<div class="jbody"></div>`);
+  const sealed=fs.sealed.includes(pi);
+  const el=$(`<div class="page${sealed?" sealed":""}"><h3>Səhifə ${pi+1} / ${pages.length}${sealed?"<small>Deşifrə edildi</small>":""}</h3></div>`);
+  el.prepend(nav);
+  // the first heard-but-empty slot gets a gentle pulse now and then, so you know where to start
+  const firstOpen=sealed?null:pg.find(x=>fs.seen.includes(x.w)&&!fs.guess[x.w]);
+  pg.forEach(x=>{
+    const seen=fs.seen.includes(x.w),g=sealed?x.p:fs.guess[x.w];
+    const e=$(`<div class="entry"><button class="slot${g?" filled":""}${picking===x.w?" picking":""}${!picking&&firstOpen===x?" nudge":""}">${g||""}</button><div class="w${seen?"":" unknown"}">${seen?esc(x.w):"· · ·"}${sealed?`<span class="az">${esc(x.az)}</span>`:""}</div></div>`);
+    const slot=e.querySelector(".slot");
+    slot.setAttribute("aria-label",seen?`${x.w}: şəkil seç`:"Hələ tapılmayıb");
+    if(sealed||!seen)slot.disabled=true;else slot.onclick=()=>{picking=picking===x.w?null:x.w;speak(x.w);drawJournal();};
+    if(seen){e.querySelector(".w").style.cursor="pointer";e.querySelector(".w").onclick=()=>speak(x.w);}
+    el.appendChild(e);
   });
-  sh.appendChild(pages);
-  if(fs.sealed.length<pagesOf(fi).length){
+  if(!sealed){
+    const allSeen=pg.every(x=>fs.seen.includes(x.w)),allSet=pg.every(x=>fs.guess[x.w]);
+    const msg=$(`<p class="msg"></p>`),chk=$(`<button class="btn primary${allSeen&&allSet?" nudge":""}">Səhifəni yoxla</button>`);
+    chk.disabled=!(allSeen&&allSet);
+    if(!allSeen){msg.innerHTML=`<span class="hint">Bu səhifənin bəzi sözlərini hələ eşitməmisən. Personajlarla danış.</span>`;}
+    chk.onclick=()=>{
+      const wrong=pg.filter(x=>fs.guess[x.w]!==x.p).length;
+      if(!wrong){rightAnswer();fs.sealed.push(pi);save();pg.forEach((x,i)=>setTimeout(()=>speak(x.w),i*800));
+        const nx=[...pages.keys()].find(i=>!fs.sealed.includes(i)&&(pageReady(fi,i)||pageNeeds(fi,i)));if(nx!==undefined)setTimeout(()=>{jPage=nx;drawJournal();},1600);
+        drawJournal();renderQuest();renderScene();updateCount();return;}
+      wrongAnswer();msg.className="msg bad";msg.textContent=wrong===1?"Az qaldı: yalnız bir söz səhvdir.":`Hələ deyil: ${wrong} söz səhvdir.`;
+    };
+    el.append($(`<div class="row"></div>`),msg);el.lastElementChild.previousElementSibling.appendChild(chk);
+  }
+  body.appendChild(el);
+
+  if(fs.sealed.length<pages.length){
     const used=new Set(Object.values(fs.guess));
-    const pal=$(`<div class="page"><p class="hint">${picking?`<b>${esc(picking)}</b> üçün şəkil seç:`:"Şəkillər. Əvvəlcə bir sözün xanasına toxun."}</p><div class="palette"></div></div>`);
-    [...words].sort((a,b)=>a.p<b.p?-1:1).forEach(x=>{
-      const b=$(`<button class="pict${used.has(x.p)?" used":""}">${x.p}</button>`);b.disabled=!picking;
-      b.onclick=()=>{for(const k in fs.guess)if(fs.guess[k]===x.p)delete fs.guess[k];fs.guess[picking]=x.p;picking=null;save();drawJournal();};
+    const pal=$(`<div class="page pal"><p class="hint">${picking?`<b>${esc(picking)}</b> üçün şəkil seç:`:"Şəkillər. Əvvəlcə sözün xanasına toxun, sonra şəklə."}</p><div class="palette"></div></div>`);
+    const sealedPics=new Set(pages.flatMap((p,i)=>fs.sealed.includes(i)?p.map(x=>x.p):[]));
+    // harder levels mix in pictures from other floors and stop greying out the ones you used
+    const own=new Set(words.map(x=>x.p)),decoys=FLOORS.flatMap(f=>f.words).filter(x=>!own.has(x.p)&&own.add(x.p)).sort((a,b)=>(hashStr(a.p+fi)%97)-(hashStr(b.p+fi)%97)).slice(0,3*lvl());
+    [...words.filter(x=>!sealedPics.has(x.p)),...decoys].sort((a,b)=>a.p<b.p?-1:1).forEach(x=>{
+      const b=$(`<button class="pict${used.has(x.p)&&lvl()<2?" used":""}">${x.p}</button>`);b.disabled=!picking;
+      b.onclick=()=>{for(const k in fs.guess)if(fs.guess[k]===x.p)delete fs.guess[k];fs.guess[picking]=x.p;picking=null;save();drawJournal();updateCount();};
       pal.querySelector(".palette").appendChild(b);
     });
-    sh.appendChild(pal);
+    body.appendChild(pal);
   }else if(fi===S.floor&&exitOpen(fi)){
-    sh.appendChild($(`<p class="msg ok">Bu mərtəbənin dili deşifrə edildi. Çıxış açıqdır.</p>`));
+    body.appendChild($(`<div class="page pal"><p class="msg ok">Bu mərtəbənin dili deşifrə edildi. Çıxış açıqdır.</p></div>`));
   }
+  sh.appendChild(body);
   layer.appendChild(ov);
 }
 function closeLayer(){layer.innerHTML="";}

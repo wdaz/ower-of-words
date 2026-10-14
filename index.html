@@ -71,6 +71,25 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stage .dialog.hidden{display:none}
 .stage .dialog .line{font-size:1.15rem;line-height:1.45}
 .stage .dialog .opt{padding:8px 10px;font-size:1rem}
+.toast{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;background:var(--accent);color:var(--on-accent);font-weight:700;padding:8px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:fade .4s}
+.line.veil{filter:blur(7px);user-select:none}
+.reveal{align-self:flex-start}
+/* gentle reminders: something waits for you here */
+.nudge{animation:nudge 3.2s ease-in-out infinite}
+@keyframes nudge{0%,70%,100%{box-shadow:0 0 0 0 transparent}80%{box-shadow:0 0 0 4px var(--accent)}90%{box-shadow:0 0 0 8px transparent}}
+@media (prefers-reduced-motion:reduce){.nudge{animation:none;outline:2px solid var(--accent)}}
+/* journal: one page + the pictures, fits the screen */
+.sheet.journal{max-height:calc(100vh - 32px);overflow:hidden}
+.jbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;min-height:0}
+@media (max-width:700px){.jbody{grid-template-columns:1fr}.sheet.journal{overflow:auto}}
+.jnav{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.jnav .dots{display:flex;gap:6px}
+.jnav .dot{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);font-size:.8rem;padding:0}
+.jnav .dot.on{background:var(--ink);color:var(--bg)}
+.jnav .dot.sealed{border-color:var(--ok);color:var(--ok)}
+.jnav .dot.on.sealed{background:var(--ok);color:var(--bg)}
+.jnav .icon:disabled{opacity:.35}
+.page.pal{align-self:start}
 .dlg-toggle{position:absolute;top:10px;right:10px;z-index:2;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 80%,transparent);border-radius:999px;padding:5px 12px;font-size:.85rem}
 @media (max-width:600px){.stage .dialog{left:6px;right:6px;bottom:6px;max-height:70%;padding:10px}.stage .dialog .line{font-size:1.05rem}}
 .who{display:flex;align-items:center;gap:10px}
