@@ -103,7 +103,7 @@ function lineEl(text){
 
 /* ======================= SCENE ======================= */
 await loadCharacters(); // rigged people; falls back to the procedural ones if this fails
-const engine=createEngine(stage,{onSpot:id=>clickSpot(id)});engineRef=engine;
+const engine=createEngine(stage,{onSpot:id=>clickSpot(id),onWalk:()=>{if(passive())hideDialog();}});engineRef=engine;
 const floorMods={};
 async function floorModule(i){
   if(floorMods[i])return floorMods[i];
@@ -162,6 +162,20 @@ function showLines(name,lines,after,who){
     const b=$(`<button class="btn reveal">Mətni göstər</button>`);b.onclick=()=>{ls.forEach(l=>l.classList.remove("veil"));b.remove();};ls[ls.length-1]?.after(b);}
   speak(lines.join(" "),0,who);
   if(after)after(dialog);
+  scheduleHide();
+}
+// A finished line (idle chat, a sign, a "done" line) needs nothing from the player, so it clears itself
+// once it has been read and spoken, or as soon as the player walks off. Questions and buttons stay.
+let autoHide=0;
+const passive=()=>![...dialog.querySelectorAll("button,input,textarea")].some(b=>!b.closest(".who,.line")&&!b.classList.contains("reveal"));
+const hideDialog=()=>{clearInterval(autoHide);if(!dialog.classList.contains("hidden"))setDialogHidden(true);};
+function scheduleHide(){
+  clearInterval(autoHide);if(!passive())return;
+  const until=Date.now()+2500+dialog.textContent.length*60,box=dialog.firstElementChild;
+  autoHide=setInterval(()=>{
+    if(dialog.firstElementChild!==box||!passive())return clearInterval(autoHide);
+    if(Date.now()>until&&!(window.speechSynthesis&&speechSynthesis.speaking))hideDialog();
+  },400);
 }
 function say(text){dialog.innerHTML="";dialog.appendChild($(`<p class="hint">${esc(text)}</p>`));}
 
@@ -187,6 +201,7 @@ function clickSpot(id){
   const p=lineEl(sp.label);p.classList.add("sign");dialog.appendChild(p);
   speak(sp.label.replace("·",","));
   if(t&&fs.talked&&t.type==="fetch") dialog.appendChild($(`<p class="hint">Bu deyil. Onun nə istədiyini yenidən dinlə.</p>`));
+  scheduleHide();
 }
 
 function runTask(t,sp){

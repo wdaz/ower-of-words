@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import * as kit from "./kit.js";
 
-export function createEngine(container, { onSpot }) {
+export function createEngine(container, { onSpot, onWalk }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.shadowMap.enabled = true;
@@ -124,7 +124,7 @@ export function createEngine(container, { onSpot }) {
   }
   renderer.domElement.addEventListener("click", ev => {
     const h = pick(ev); if (!h) return;
-    if (h.spot) goToSpot(h.spot); else walkTo(h.ground.x, h.ground.z);
+    if (h.spot) goToSpot(h.spot); else { walkTo(h.ground.x, h.ground.z); onWalk?.(); }
   });
   renderer.domElement.addEventListener("pointermove", ev => {
     if (!scene) return;
@@ -135,7 +135,7 @@ export function createEngine(container, { onSpot }) {
       ringMesh.position.set(wp.x, 0.02, wp.z); ringMesh.visible = true;
     } else ringMesh.visible = false;
   });
-  window.addEventListener("keydown", e => { if (e.target.closest("input,textarea")) return; const k = e.key.toLowerCase(); if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) { keys.add(k); e.preventDefault(); } });
+  window.addEventListener("keydown", e => { if (e.target.closest("input,textarea")) return; const k = e.key.toLowerCase(); if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) { if (!keys.size) onWalk?.(); keys.add(k); e.preventDefault(); } });
   window.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
 
   function resize() {
