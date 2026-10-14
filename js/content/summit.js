@@ -2,52 +2,50 @@
 export default {
  "name": "The Summit",
  "people": "Şura",
- "cefr": "B1",
- "story": "Zirvədə bütün xalqların ağsaqqalları toplanıb və mübahisə edirlər: qüllədə hamı bir dildə danışmalıdır, yoxsa hər xalq başqasının dilini öyrənməlidir? Səslər bərabər bölünür. Aşağıdan gələn köhnə bir məktub hər şeyi dəyişə bilər. Son sınaq səndədir: dinlə, fikir bildir və sərbəst danış.",
+ "cefr": "B1-B2",
+ "story": "Zirvədə bütün xalqların ağsaqqalları toplanıb və bir həftədir mübahisə edirlər: qüllədə hamı bir dildə danışmalıdır, yoxsa hər xalq başqasının dilini öyrənməlidir? Səslər bərabər bölünür. Aşağıdan gələn köhnə bir zərf hər şeyi dəyişə bilər. Son sınaq səndədir: dinlə, fikir bildir və sərbəst danış.",
  "words": [
-  { "w": "opinion", "p": "💭", "az": "fikir" },
-  { "w": "disagree", "p": "👎", "az": "razı olmamaq" },
-  { "w": "although", "p": "↔️", "az": "baxmayaraq ki" },
-  { "w": "learn", "p": "🎓", "az": "öyrənmək" },
-  { "w": "suggest", "p": "💡", "az": "təklif etmək" },
-  { "w": "experience", "p": "🎒", "az": "təcrübə" },
-  { "w": "decide", "p": "⚖️", "az": "qərar vermək" },
-  { "w": "agree", "p": "👍", "az": "razılaşmaq" },
-  { "w": "vote", "p": "🗳️", "az": "səs vermək" },
-  { "w": "letter", "p": "✉️", "az": "məktub" },
-  { "w": "mistake", "p": "❌", "az": "səhv" },
-  { "w": "change", "p": "🔄", "az": "dəyişmək" },
-  { "w": "future", "p": "🔮", "az": "gələcək" },
-  { "w": "respect", "p": "🙇", "az": "hörmət" },
-  { "w": "proud", "p": "🦚", "az": "qürurlu" },
-  { "w": "listen", "p": "👂", "az": "qulaq asmaq" }
+  { "w": "argue", "p": "🗣️", "az": "mübahisə etmək" },
+  { "w": "stubborn", "p": "🐂", "az": "inadkar" },
+  { "w": "convince", "p": "🧲", "az": "inandırmaq" },
+  { "w": "compromise", "p": "🤝", "az": "güzəşt, kompromis" },
+  { "w": "admit", "p": "🙋", "az": "etiraf etmək" },
+  { "w": "ashamed", "p": "😳", "az": "utanan, xəcalətli" },
+  { "w": "wisdom", "p": "🦉", "az": "müdriklik" },
+  { "w": "fair", "p": "⚖️", "az": "ədalətli" },
+  { "w": "envelope", "p": "✉️", "az": "zərf" },
+  { "w": "handwriting", "p": "✍️", "az": "əl yazısı" },
+  { "w": "foreign", "p": "🌍", "az": "xarici" },
+  { "w": "translate", "p": "🔤", "az": "tərcümə etmək" },
+  { "w": "regret", "p": "😔", "az": "peşman olmaq" },
+  { "w": "deserve", "p": "🏅", "az": "layiq olmaq" },
+  { "w": "doubt", "p": "🤔", "az": "şübhə" },
+  { "w": "ancient", "p": "🏛️", "az": "qədim" }
  ],
  "forms": {
-  "agrees": "agree",
-  "agreed": "agree",
-  "disagrees": "disagree",
-  "disagreed": "disagree",
-  "learning": "learn",
-  "learned": "learn",
-  "learns": "learn",
-  "decided": "decide",
-  "decides": "decide",
-  "opinions": "opinion",
-  "suggested": "suggest",
-  "suggests": "suggest",
-  "experiences": "experience",
-  "votes": "vote",
-  "voted": "vote",
-  "voting": "vote",
-  "letters": "letter",
-  "mistakes": "mistake",
-  "changed": "change",
-  "changes": "change",
-  "changing": "change",
-  "respected": "respect",
-  "listened": "listen",
-  "listening": "listen",
-  "listens": "listen"
+  "argued": "argue",
+  "argues": "argue",
+  "arguing": "argue",
+  "argument": "argue",
+  "arguments": "argue",
+  "convinced": "convince",
+  "convinces": "convince",
+  "convincing": "convince",
+  "compromises": "compromise",
+  "admits": "admit",
+  "admitted": "admit",
+  "admitting": "admit",
+  "envelopes": "envelope",
+  "translated": "translate",
+  "translates": "translate",
+  "translating": "translate",
+  "translator": "translate",
+  "regrets": "regret",
+  "regretted": "regret",
+  "deserves": "deserve",
+  "deserved": "deserve",
+  "doubts": "doubt",
+  "doubted": "doubt"
  },
  "spots": [
   {
@@ -55,7 +53,7 @@ export default {
    "npc": "First elder",
    "idle": [
     "A knight never changes his word. Well... almost never.",
-    "When I was young, life was simpler. Or maybe I was simpler.",
+    "I'm not stubborn. I'm just always right. That's a different thing!",
     "In my opinion, young people talk too fast. But you listen well, I'll give you that."
    ]
   },
@@ -63,9 +61,9 @@ export default {
    "id": "elder2",
    "npc": "Second elder",
    "idle": [
-    "I disagree with him almost every day, but I respect him.",
+    "We argue almost every day, but I respect him deeply.",
     "Every language is a door. Somebody told me that a long time ago.",
-    "Learning never really finishes. That's the fun of it."
+    "Wisdom doesn't come with a long beard. It comes from listening."
    ]
   },
   {
@@ -73,7 +71,7 @@ export default {
    "npc": "Third elder",
    "idle": [
     "I suggest that you listen first and speak later.",
-    "A good council doesn't shout. It listens.",
+    "A good compromise leaves everyone a little unhappy. That's how you know it's fair.",
     "Agree or disagree, but always give a reason."
    ]
   },
@@ -82,7 +80,7 @@ export default {
    "npc": "Scribe",
    "idle": [
     "Every word goes into the council book. Even the boring ones.",
-    "Forty years of opinions! My hand is so tired.",
+    "Forty years of arguments! My hand is so tired.",
     "White stone means yes, black stone means no. Simple!"
    ]
   },
@@ -91,18 +89,18 @@ export default {
    "npc": "Messenger",
    "idle": [
     "Five hundred steps! I can't feel my legs.",
-    "The wind up here is crazy. Hold on to your hat!",
+    "The wind up here is crazy. It nearly blew my hat off!",
     "Everyone downstairs is waiting to hear the bell."
    ]
   },
   { "id": "table", "label": "THE COUNCIL TABLE" },
   { "id": "book", "label": "THE COUNCIL BOOK · FORTY YEARS OF WORDS" },
   { "id": "stones", "label": "VOTING STONES · WHITE = YES · BLACK = NO" },
-  { "id": "letter", "label": "AN OLD LETTER · FOR THE YOUNG KNIGHT IN THE RED CLOAK" },
+  { "id": "letter", "label": "AN OLD ENVELOPE · FOR THE YOUNG KNIGHT IN THE RED CLOAK" },
   {
    "id": "bell",
    "exit": true,
-   "locked": "The council has not decided yet."
+   "locked": "The council has not decided yet. They are still arguing."
   }
  ],
  "tasks": [
@@ -111,32 +109,32 @@ export default {
    "type": "line",
    "hint": "Üçüncü ağsaqqal səni qarşılayır.",
    "say": [
-    "Welcome to the top of the tower, traveler. Did you really climb all the floors on your own?",
-    "In my opinion, that is quite an experience.",
-    "But you have come at a difficult moment. The council can't decide anything today.",
+    "Welcome to the top of the tower, traveler. Did you really climb all the floors on your own? You deserve a rest.",
+    "But I'm afraid you have come at a difficult moment. The elders have been arguing for a whole week.",
+    "Each of them is too stubborn to accept a compromise, so the council can't decide anything.",
     "Please listen to my two friends first. Then come back and tell me what you think."
    ],
-   "done": "Start with the first elder, the knight in red. He has the loudest voice."
+   "done": "Start with the first elder, the knight in red. He's the most stubborn of us all, and the loudest."
   },
   {
    "npc": "elder1",
    "type": "listen",
    "hint": "Birinci ağsaqqalın fikrini dinlə.",
    "say": [
-    "Listen carefully, young one. I'm going to tell you why I'm right.",
-    "When I was a boy, everyone in the tower spoke one language. Life was simple.",
+    "Listen carefully, young one. I'm going to tell you why I'm right, and I'm sure I'll convince you.",
+    "When I was a boy, everyone in the tower spoke one language. It was an ancient tradition, older than these stones.",
     "Then the five peoples moved to different floors, and their words slowly changed.",
-    "Today a farmer from the market and a reader from the library need half an hour to buy one apple!",
-    "I have never learned another language, and I'm proud of it. One language for everybody: that is my opinion.",
-    "And I suggest that we decide today, before the sun goes down."
+    "Today a farmer from the market and a reader from the library need a translator and half an hour to buy one apple!",
+    "I have never learned a foreign language, and I'm not ashamed of it. One language for everybody: that is my opinion.",
+    "And I suggest that we decide today, before the sun goes down. No compromise!"
    ],
    "qs": [
     { "q": "What does the first elder want?", "az": "Onun istəyi", "opts": ["One language for all the peoples", "Every people should learn three languages", "No languages at all, only pictures"], "a": 0 },
-    { "q": "What happened after the peoples moved to different floors?", "az": "Sonra nə oldu?", "opts": ["Their words slowly changed", "They forgot how to read", "They stopped selling apples"], "a": 0 },
-    { "q": "How does he feel about speaking only one language?", "az": "Onun hissi", "opts": ["He is proud of it", "He is ashamed of it", "He is bored with it"], "a": 0 },
+    { "q": "How old is the tradition of one language, according to him?", "az": "Ənənə nə qədər köhnədir?", "opts": ["Older than the stones of the tower", "About ten years old", "As old as the scribe"], "a": 0 },
+    { "q": "How does he feel about not knowing a foreign language?", "az": "Onun hissi", "opts": ["He isn't ashamed of it", "He regrets it very much", "He wants to start learning today"], "a": 0 },
     { "q": "When does he want the council to decide?", "az": "Nə vaxt?", "opts": ["Before the sun goes down", "Next year", "After the bell rings"], "a": 0 }
    ],
-   "done": "Now go and listen to that dreamer in the blue hat. He will disagree with me, of course."
+   "done": "Now go and listen to that dreamer in the blue hat. He'll argue with me, of course. He always does."
   },
   {
    "npc": "elder2",
@@ -148,17 +146,17 @@ export default {
    "turns": [
     {
      "q": [
-      "I disagree with him completely. Although one language sounds easy, we would lose so much.",
+      "I'm afraid I can't agree with him. Although one language sounds easy, we would lose so much.",
       "Tell me honestly: have you ever learned a foreign language?"
      ],
      "opts": [
       "Yes, I'm learning English right now. It's hard, but I love it.",
-      "Yes, I think he's right. One language is enough.",
+      "Yes, and I think he's right. One language is enough.",
       "No, I have never been to the market."
      ],
      "a": 0,
      "wrong": "Hm, that doesn't really answer my question. Have you learned a language or not?",
-     "then": "I knew it! I can hear it in your voice."
+     "then": "I knew it! I can hear it in your voice. You still translate in your head sometimes, don't you? We all do at first."
     },
     {
      "q": [
@@ -185,11 +183,11 @@ export default {
      ],
      "a": 0,
      "wrong": "Hmm. Please give me a real answer, and a kind one. He is old, but he isn't a fool.",
-     "then": "Well said. You can disagree with someone and still show respect."
+     "then": "Well said. You can argue with someone and still show respect. That is real wisdom."
     },
     {
      "q": [
-      "So you are on my side? Wonderful! Then I suggest that all the elders learn each other's languages, starting tomorrow."
+      "So you're on my side? Wonderful! Then I suggest a fair compromise: every elder learns the language of one neighbour, starting tomorrow."
      ],
      "opts": [
       "I agree, although it won't be easy for everyone.",
@@ -207,7 +205,7 @@ export default {
    "type": "talk",
    "hint": "Üçüncü ağsaqqala qayıt.",
    "say": [
-    "So, you have listened to both of them."
+    "So, you have listened to both of them. I hope they didn't argue too loudly."
    ],
    "turns": [
     {
@@ -221,7 +219,7 @@ export default {
      ],
      "a": 0,
      "wrong": "No, no. Listen to them again. That is not what I heard.",
-     "then": "Exactly. Two good men, two different opinions."
+     "then": "Exactly. Two wise men, two different opinions, and neither of them will admit that he could be wrong."
     },
     {
      "q": [
@@ -235,8 +233,8 @@ export default {
      ],
      "a": 0,
      "speak": true,
-     "wrong": "Hmm. Then the loudest or the oldest always wins. I don't like that idea.",
-     "then": "Good. I think so too."
+     "wrong": "Hmm. Then the loudest or the oldest always wins. That doesn't sound fair to me.",
+     "then": "Good. I have no doubt about it either."
     },
     {
      "q": [
@@ -264,7 +262,7 @@ export default {
    "turns": [
     {
      "q": [
-      "I write down everything the council says. Every word, for forty years!",
+      "I write down everything the council says, in my best handwriting. Every word, for forty years!",
       "So, who are you? Tell me a little about yourself."
      ],
      "opts": [
@@ -275,7 +273,7 @@ export default {
      "a": 0,
      "speak": true,
      "wrong": "Ha! That's not what I asked. I want to know who you are!",
-     "then": "A traveler! How exciting. Let me write that down."
+     "then": "A traveler from a foreign land! How exciting. Let me write that down."
     },
     {
      "q": [
@@ -288,7 +286,7 @@ export default {
      ],
      "a": 0,
      "wrong": "Really? That's not much of a story. Tell me something real!",
-     "then": "Not a single word! And now listen to you. What an experience."
+     "then": "Not a single word! And now listen to you. Nobody needs to translate for you any more."
     },
     {
      "q": [
@@ -303,7 +301,7 @@ export default {
      "wrong": "Hmm, that doesn't sound like the council. Who sent you, and why?"
     }
    ],
-   "done": "The stones! Of course. The council always forgets where they are."
+   "done": "The stones! Of course. The council always forgets where they are. They're too busy arguing."
   },
   {
    "npc": "scribe",
@@ -324,15 +322,15 @@ export default {
    "hint": "Səsverməni dinlə.",
    "say": [
     "Thank you, traveler. The vote is open. Each elder has one stone.",
-    "The first elder has put in a black stone: he doesn't want to learn other languages.",
+    "The first elder has put in a black stone: he still refuses to learn a foreign language.",
     "The second elder has put in a white stone, of course.",
     "And I... I haven't voted yet. At the moment it is one against one.",
-    "Before I vote, I want to hear something new. The same old arguments won't change anybody's mind.",
+    "Honestly, I have my doubts about both sides, and the same old arguments won't convince anybody.",
     "Wait... who is that at the ladder, out of breath? A messenger from the floors below?"
    ],
    "qs": [
     { "q": "What colour was the first elder's stone?", "az": "Daşın rəngi", "opts": ["Black", "White", "Red"], "a": 0 },
-    { "q": "Why hasn't the third elder voted yet?", "az": "Niyə hələ səs vermir?", "opts": ["He wants to hear something new first", "He has lost his stone", "He agrees with the first elder"], "a": 0 },
+    { "q": "Why hasn't the third elder voted yet?", "az": "Niyə hələ səs vermir?", "opts": ["The old arguments haven't convinced him", "He has lost his stone", "He agrees with the first elder"], "a": 0 },
     { "q": "What is the result of the vote at the moment?", "az": "İndiki nəticə", "opts": ["One against one", "Two against one", "Three against nobody"], "a": 0 },
     { "q": "Who has just arrived?", "az": "Kim gəldi?", "opts": ["A messenger from the floors below", "The scribe's daughter", "A farmer with apples"], "a": 0 }
    ],
@@ -349,8 +347,8 @@ export default {
    "turns": [
     {
      "q": [
-      "The librarian downstairs sent me. A letter was found inside a very old book.",
-      "It says: 'For the young knight in the red cloak'. Do you know who that is?"
+      "The librarian downstairs sent me. She found an envelope inside a very old book.",
+      "On the front it says: 'For the young knight in the red cloak'. Do you know who that is?"
      ],
      "opts": [
       "I'm not sure, but the first elder wears red, and he's a knight.",
@@ -358,13 +356,13 @@ export default {
       "No idea. Maybe you should just throw it away."
      ],
      "a": 0,
-     "wrong": "Hmm, I don't think so. This letter is about sixty years old. Look around the council again.",
+     "wrong": "Hmm, I doubt it. This envelope is about sixty years old. Look around the council again.",
      "then": "The first elder? Of course! He's the only knight up here."
     },
     {
      "q": [
-      "There's just one small problem.",
-      "When I came up through the hatch, the wind blew the letter right out of my hand!"
+      "There's just one small problem, and I have to admit it was my fault.",
+      "When I came up through the hatch, the wind blew the envelope right out of my hand!"
      ],
      "opts": [
       "Don't worry. Did you see where it landed?",
@@ -381,59 +379,59 @@ export default {
   {
    "npc": "messenger",
    "type": "fetch",
-   "hint": "Qasid məktubun hara uçduğunu deyir.",
+   "hint": "Qasid zərfin hara uçduğunu deyir.",
    "say": [
     "It flew over the bell and got stuck on a column at the back, between the purple banner and the blue one.",
     "Could you get it for me? I'm too afraid to go near the edge."
    ],
    "target": "letter",
    "flag": "gotLetter",
-   "doHint": "Məktub haradadır? Qasidin sözlərini xatırla.",
-   "done": "You've got it! Please take the letter to the first elder. I'm too shy."
+   "doHint": "Zərf haradadır? Qasidin sözlərini xatırla.",
+   "done": "You've got it! Please take the envelope to the first elder. I'm too shy."
   },
   {
    "npc": "elder1",
    "type": "talk",
-   "hint": "Məktubu sahibinə apar.",
+   "hint": "Zərfi sahibinə apar.",
    "say": [
-    "What's that in your hand? A letter for me? Let me see..."
+    "What's that in your hand? An envelope for me? Let me see..."
    ],
    "turns": [
     {
      "q": [
-      "This is my handwriting! I wrote this sixty years ago, when I was learning the language of the library.",
-      "My teacher was a quiet boy from the library. We learned each other's languages together. Today he wears a big blue hat."
+      "This is my handwriting! I wrote this letter sixty years ago, when I was learning the language of the library.",
+      "My teacher was a quiet boy from the library. We translated for each other and learned together. Today he wears a big blue hat."
      ],
      "opts": [
-      "But you told me you had never learned another language!",
+      "But you told me you had never learned a foreign language!",
       "So you have always spoken only one language.",
       "What a nice story about the market."
      ],
      "a": 0,
      "wrong": "Hm. Were you listening to me earlier? Think about what I told you.",
-     "then": "Yes... I said that. I think I was too proud to remember."
+     "then": "Yes... I said that. I suppose I was too stubborn to remember."
     },
     {
      "q": [
       "And look at the last line: 'Every language is a door.' I wrote that! My friend in the blue hat kept my words.",
-      "Oh dear. For a whole week I have argued against my own sentence."
+      "Oh dear. For a whole week I have argued against my own sentence. I'm so ashamed."
      ],
      "opts": [
       "Everyone makes mistakes. What matters is what you do now.",
-      "Yes, it's very embarrassing. Everybody will laugh at you.",
+      "Yes, you should be ashamed. Everybody will laugh at you.",
       "Then maybe you should stop talking at the council."
      ],
      "a": 0,
      "speak": true,
      "wrong": "Ouch. That may be honest, but it isn't very kind.",
-     "then": "You are wise for such a young traveler."
+     "then": "You have the wisdom of someone much older, young traveler."
     },
     {
      "q": [
-      "So tell me, traveler. Can an old knight still change his opinion?"
+      "So tell me honestly. Can a stubborn old knight still admit that he was wrong?"
      ],
      "opts": [
-      "Of course. Changing your mind when you learn something new is a strength.",
+      "Of course. Admitting a mistake when you learn something new is a strength.",
       "No. At your age, it's too late to change.",
       "Only if the other elders pay you for it."
      ],
@@ -441,17 +439,17 @@ export default {
      "wrong": "Hmph. I hope you're wrong about that."
     }
    ],
-   "done": "Then I have changed it. I'll tell the council myself."
+   "done": "Then I admit it: I was wrong. I'll tell the council myself, and I won't regret it."
   },
   {
    "npc": "elder2",
    "type": "line",
    "hint": "İkinci ağsaqqal nə isə etiraf etmək istəyir.",
    "say": [
-    "So the old knight finally remembers! Yes, it's all true.",
+    "So the old knight finally admits it! Yes, it's all true.",
     "Sixty years ago he taught me the words of the market, and I taught him the words of the library.",
-    "That sentence about the door was his. I only kept it safe for him.",
-    "I never told anyone, because I hoped he would remember it himself one day."
+    "That sentence about the door was his. I only kept it safe for him, in that old envelope.",
+    "I never told anyone, because I hoped he would remember it himself one day. I don't regret waiting."
    ],
    "done": "Now go to the third elder. I think it's time to vote again."
   },
@@ -461,12 +459,12 @@ export default {
    "hint": "Üçüncü ağsaqqal son dəfə fikrini soruşur.",
    "say": [
     "The first elder has changed his mind. Before the second vote, I want to hear you once more.",
-    "Do you agree with the second elder? Say it clearly, and be honest about the difficulty."
+    "Every elder learns the language of one neighbour. Is that compromise fair? Say it clearly, and be honest about the difficulty."
    ],
-   "answer": "I agree with him although it will not be easy",
+   "answer": "The compromise is fair although it will be hard",
    "extra": [
-    "disagree",
-    "opinion",
+    "stubborn",
+    "doubt",
     "never",
     "because"
    ],
@@ -478,13 +476,13 @@ export default {
    "hint": "Katib qərarı kitaba yazmalıdır.",
    "say": [
     "Three white stones! Not a single black one. I haven't seen that in forty years.",
-    "Now I must write the decision in the council book, in clear words for the future.",
+    "Now I must write the decision in the council book, in my finest handwriting, for the future.",
     "Which sentence should I write?"
    ],
    "opts": [
-    "Every people will learn each other's languages, and the tower will speak with many voices.",
+    "Every people will learn a neighbour's language, and the tower will speak with many voices.",
     "From now on, the tower will speak only one language.",
-    "The council could not decide, so it will vote again next year."
+    "The council could not agree, so it will argue again next year."
    ],
    "a": 0,
    "done": "Beautiful. Now the council wants to hear your own story. Go to the second elder."
@@ -495,8 +493,8 @@ export default {
    "hint": "Şuraya öz hekayəni danış.",
    "min": 25,
    "say": [
-    "Traveler, before we ring the bell, tell the council about yourself and your experience.",
-    "Who are you? Why are you learning English? What will you do next?"
+    "Traveler, before we ring the bell, tell the council about yourself. After such a journey, you deserve to be heard.",
+    "Who are you? Why are you learning a foreign language? What will you do next?"
    ],
    "done": "Thank you, traveler. The council has decided: every people will learn. Ring the bell!"
   }
